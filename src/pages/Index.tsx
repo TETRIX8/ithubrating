@@ -5,27 +5,56 @@ import LoginForm from "@/components/LoginForm";
 import ApiResponse from "@/components/ApiResponse";
 import Loading from "@/components/Loading";
 import SplashScreen from "@/components/SplashScreen";
-import { getUserData, UserData } from "@/utils/api";
+import LeaderboardHeader from "@/components/LeaderboardHeader";
+import LeaderboardList from "@/components/LeaderboardList";
+import TopStudentsSection from "@/components/TopStudentsSection";
+import { getUserData, UserData, getDiaryData, DiaryData } from "@/utils/api";
+import { StudentRankProps } from "@/components/StudentRankCard";
 import { toast } from "sonner";
 import { Github, Book } from "lucide-react";
+import { processLxpData, getLeaderboardData } from "@/services/lxpService";
 
 const Index = () => {
   const navigate = useNavigate();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [diaryData, setDiaryData] = useState<DiaryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<"splash" | "login" | "loading" | "data">("splash");
+  const [step, setStep] = useState<"splash" | "login" | "loading" | "data" | "leaderboard">("splash");
+  const [students, setStudents] = useState<StudentRankProps[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
   useEffect(() => {
     // Initialize with splash screen
     if (step === "splash") {
       const timer = setTimeout(() => {
-        setStep("login");
+        setStep("leaderboard");
+        loadLeaderboardData();
       }, 5000);
       
       return () => clearTimeout(timer);
     }
   }, []);
+
+  const loadLeaderboardData = async () => {
+    setIsLoadingLeaderboard(true);
+    try {
+      const leaderboardData = await getLeaderboardData();
+      
+      // Convert to StudentRankProps format with rank
+      const rankedStudents = leaderboardData.map((student, index) => ({
+        ...student,
+        rank: index + 1
+      }));
+      
+      setStudents(rankedStudents);
+    } catch (error) {
+      console.error("Error loading leaderboard data:", error);
+      toast.error("Ошибка при загрузке данных рейтинга");
+    } finally {
+      setIsLoadingLeaderboard(false);
+    }
+  };
 
   const handleLoginSuccess = async (token: string) => {
     setAccessToken(token);
@@ -37,19 +66,29 @@ const Index = () => {
       localStorage.setItem("accessToken", token);
       
       // Artificial delay to show the loading animation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Fetch user data
       const data = await getUserData(token);
       setUserData(data);
       
-      // Store the student ID for the diary page
+      // Store the student ID for the diary page and fetch diary data
       localStorage.setItem("studentId", data.id);
+      
+      const diary = await getDiaryData(token, data.id);
+      setDiaryData(diary);
+      
+      // Process and store LXP data
+      await processLxpData(data, diary);
+      
+      // Reload leaderboard data after processing
+      await loadLeaderboardData();
       
       setStep("data");
       toast.success("Авторизация успешна");
     } catch (error) {
       console.error("Error fetching user data:", error);
-      setStep("login");
+      setStep("leaderboard");
       toast.error("Ошибка при получении данных пользователя");
     } finally {
       setIsLoading(false);
@@ -66,12 +105,21 @@ const Index = () => {
     localStorage.removeItem("studentId");
     setAccessToken(null);
     setUserData(null);
+    setDiaryData(null);
+    setStep("leaderboard");
+  };
+
+  const switchToLeaderboard = () => {
+    setStep("leaderboard");
+  };
+
+  const switchToLogin = () => {
     setStep("login");
   };
 
   // Show splash screen
   if (step === "splash") {
-    return <SplashScreen onComplete={() => setStep("login")} />;
+    return <SplashScreen onComplete={() => setStep("leaderboard")} />;
   }
 
   return (
@@ -91,7 +139,7 @@ const Index = () => {
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-lg font-medium">LXP API Demo</span>
+            <span className="text-lg font-medium">Рейтинг студентов LXP</span>
           </div>
           
           <div className="flex items-center gap-4">
@@ -115,6 +163,15 @@ const Index = () => {
               <span className="hidden sm:inline">GitHub</span>
             </a>
             
+            {step === "leaderboard" && !userData && (
+              <button
+                onClick={switchToLogin}
+                className="text-primary hover:text-primary/80 transition-colors"
+              >
+                Войти
+              </button>
+            )}
+            
             {step === "data" && (
               <button
                 onClick={resetToLogin}
@@ -123,21 +180,59 @@ const Index = () => {
                 Выйти
               </button>
             )}
+            
+            {step !== "leaderboard" && step !== "splash" && (
+              <button
+                onClick={switchToLeaderboard}
+                className="text-gray-600 hover:text-primary transition-colors"
+              >
+                Рейтинг
+              </button>
+            )}
           </div>
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-6 py-12">
+      <main className="flex-1 flex items-start justify-center px-6 py-8">
         <div className="w-full max-w-7xl mx-auto">
           {step === "login" && (
             <div className="text-center mb-10 animate-fade-in">
               <h1 className="text-4xl font-bold mb-4 text-gray-900">
-                Демонстрация работы API LXP
+                Авторизация в системе LXP
               </h1>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Войдите в систему, чтобы увидеть работу GraphQL API сервиса LXP
+                Войдите, чтобы просмотреть свои данные и добавить себя в рейтинг студентов
               </p>
             </div>
+          )}
+
+          {step === "leaderboard" && (
+            <>
+              <LeaderboardHeader />
+              
+              {students.length > 0 && (
+                <TopStudentsSection students={students} />
+              )}
+              
+              <LeaderboardList 
+                students={students} 
+                isLoading={isLoadingLeaderboard} 
+              />
+              
+              {students.length === 0 && !isLoadingLeaderboard && (
+                <div className="text-center mt-8">
+                  <p className="text-muted-foreground mb-4">
+                    Пока нет данных в рейтинге. Войдите в систему, чтобы добавить себя!
+                  </p>
+                  <button
+                    onClick={switchToLogin}
+                    className="bg-primary text-white rounded-lg px-4 py-2.5 hover:bg-primary/90 transition-colors"
+                  >
+                    Авторизоваться
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           <div className="flex flex-col items-center justify-center">
@@ -157,7 +252,7 @@ const Index = () => {
       <footer className="py-6 px-8 text-center text-gray-500 text-sm">
         <div className="max-w-7xl mx-auto">
           <p>
-            Демонстрация работы с API сервиса LXP &copy; {new Date().getFullYear()}
+            Рейтинг успеваемости студентов LXP &copy; {new Date().getFullYear()}
           </p>
         </div>
       </footer>
