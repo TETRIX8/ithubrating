@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 const API_URL = "https://api.newlxp.ru/graphql";
@@ -222,7 +221,7 @@ export const getUserData = async (token: string): Promise<UserData> => {
 
 export const getDiaryData = async (token: string, studentId: string): Promise<DiaryData> => {
   const query = `
-    query SearchStudentDisciplinesForDisciplinesTableWithPeriod($input: SearchStudentDisciplinesInput!, $studyPeriodEndDate: String) {
+    query SearchStudentDisciplines($input: SearchStudentDisciplinesInput!, $studyPeriodEndDate: String) {
       searchStudentDisciplines(input: $input) {
         studentId
         disciplineId
@@ -237,14 +236,6 @@ export const getDiaryData = async (token: string, studentId: string): Promise<Di
         }
         academicDifferenceDisciplines {
           id
-          academicDifferenceStudent(studentId: $input.studentId) {
-            academicDifferenceStudentScore {
-              academicDifferenceAbsoluteScore
-              __typename
-            }
-            scoreForAnsweredAcademicDifferenceTasks
-            __typename
-          }
           maxScore
           teachers {
             user {
@@ -326,7 +317,7 @@ export const getDiaryData = async (token: string, studentId: string): Promise<Di
   
   try {
     const response = await axios.post(API_URL, { 
-      operationName: "SearchStudentDisciplinesForDisciplinesTableWithPeriod",
+      operationName: "SearchStudentDisciplines",
       query, 
       variables 
     }, { headers });
