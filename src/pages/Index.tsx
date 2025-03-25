@@ -13,13 +13,15 @@ import { toast } from "sonner";
 import { Github, Book } from "lucide-react";
 import { processLxpData, getLeaderboardData } from "@/services/lxpService";
 
+type AppStep = "splash" | "login" | "loading" | "data" | "leaderboard";
+
 const Index = () => {
   const navigate = useNavigate();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [diaryData, setDiaryData] = useState<DiaryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<"splash" | "login" | "loading" | "data" | "leaderboard">("splash");
+  const [step, setStep] = useState<AppStep>("splash");
   const [students, setStudents] = useState<StudentRankProps[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
@@ -78,7 +80,7 @@ const Index = () => {
       await loadLeaderboardData();
       
       setStep("data");
-      toast.success("Авторизация успешна");
+      toast.success("Авторизация успешна. Данные добавлены в рейтинг.");
     } catch (error) {
       console.error("Error fetching user data:", error);
       setStep("leaderboard");
@@ -110,9 +112,61 @@ const Index = () => {
     setStep("login");
   };
 
-  if (step === "splash") {
-    return <SplashScreen onComplete={() => setStep("leaderboard")} />;
-  }
+  const renderContent = () => {
+    switch (step) {
+      case "splash":
+        return <SplashScreen onComplete={() => setStep("leaderboard")} />;
+      case "login":
+        return (
+          <div className="text-center mb-10 animate-fade-in">
+            <h1 className="text-4xl font-bold mb-4 text-gray-900">
+              Авторизация в системе LXP
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Войдите, чтобы просмотреть свои данные и добавить себя в рейтинг студентов
+            </p>
+            <LoginForm onSuccess={handleLoginSuccess} onError={handleLoginError} />
+          </div>
+        );
+      case "loading":
+        return <Loading />;
+      case "data":
+        return userData && accessToken ? (
+          <ApiResponse userData={userData} accessToken={accessToken} />
+        ) : null;
+      case "leaderboard":
+        return (
+          <>
+            <LeaderboardHeader />
+            
+            {students.length > 0 && (
+              <TopStudentsSection students={students} />
+            )}
+            
+            <LeaderboardList 
+              students={students} 
+              isLoading={isLoadingLeaderboard} 
+            />
+            
+            {students.length === 0 && !isLoadingLeaderboard && (
+              <div className="text-center mt-8">
+                <p className="text-muted-foreground mb-4">
+                  Пока нет данных в рейтинге. Войдите в систему, чтобы добавить себя!
+                </p>
+                <button
+                  onClick={switchToLogin}
+                  className="bg-primary text-white rounded-lg px-4 py-2.5 hover:bg-primary/90 transition-colors"
+                >
+                  Авторизоваться
+                </button>
+              </div>
+            )}
+          </>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
@@ -187,57 +241,7 @@ const Index = () => {
 
       <main className="flex-1 flex items-start justify-center px-6 py-8">
         <div className="w-full max-w-7xl mx-auto">
-          {step === "login" && (
-            <div className="text-center mb-10 animate-fade-in">
-              <h1 className="text-4xl font-bold mb-4 text-gray-900">
-                Авторизация в системе LXP
-              </h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Войдите, чтобы просмотреть свои данные и добавить себя в рейтинг студентов
-              </p>
-            </div>
-          )}
-
-          {step === "leaderboard" && (
-            <>
-              <LeaderboardHeader />
-              
-              {students.length > 0 && (
-                <TopStudentsSection students={students} />
-              )}
-              
-              <LeaderboardList 
-                students={students} 
-                isLoading={isLoadingLeaderboard} 
-              />
-              
-              {students.length === 0 && !isLoadingLeaderboard && (
-                <div className="text-center mt-8">
-                  <p className="text-muted-foreground mb-4">
-                    Пока нет данных в рейтинге. Войдите в систему, чтобы добавить себя!
-                  </p>
-                  <button
-                    onClick={switchToLogin}
-                    className="bg-primary text-white rounded-lg px-4 py-2.5 hover:bg-primary/90 transition-colors"
-                  >
-                    Авторизоваться
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="flex flex-col items-center justify-center">
-            {step === "login" && (
-              <LoginForm onSuccess={handleLoginSuccess} onError={handleLoginError} />
-            )}
-            
-            {step === "loading" && <Loading />}
-            
-            {step === "data" && userData && accessToken && (
-              <ApiResponse userData={userData} accessToken={accessToken} />
-            )}
-          </div>
+          {renderContent()}
         </div>
       </main>
 
