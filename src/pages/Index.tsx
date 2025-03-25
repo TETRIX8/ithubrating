@@ -1,14 +1,16 @@
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/LoginForm";
 import ApiResponse from "@/components/ApiResponse";
 import Loading from "@/components/Loading";
 import SplashScreen from "@/components/SplashScreen";
 import { getUserData, UserData } from "@/utils/api";
 import { toast } from "sonner";
-import { Github } from "lucide-react";
+import { Github, Book } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,11 +33,18 @@ const Index = () => {
     setStep("loading");
     
     try {
+      // Store the token for other pages to use
+      localStorage.setItem("accessToken", token);
+      
       // Artificial delay to show the loading animation
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const data = await getUserData(token);
       setUserData(data);
+      
+      // Store the student ID for the diary page
+      localStorage.setItem("studentId", data.id);
+      
       setStep("data");
       toast.success("Авторизация успешна");
     } catch (error) {
@@ -53,6 +62,8 @@ const Index = () => {
   };
 
   const resetToLogin = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("studentId");
     setAccessToken(null);
     setUserData(null);
     setStep("login");
@@ -84,6 +95,16 @@ const Index = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            {step === "data" && (
+              <button
+                onClick={() => navigate("/diary")}
+                className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
+              >
+                <Book size={20} />
+                <span className="hidden sm:inline">Дневник</span>
+              </button>
+            )}
+            
             <a 
               href="https://github.com/TETRIX8/lxpapi" 
               target="_blank" 
