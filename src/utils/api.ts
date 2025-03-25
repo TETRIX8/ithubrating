@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 const API_URL = "https://api.newlxp.ru/graphql";
@@ -202,7 +201,7 @@ export const getUserData = async (token: string): Promise<UserData> => {
 
 export const getDiaryData = async (token: string, userId: string): Promise<DiaryData[]> => {
   const query = `
-    query SearchStudentDisciplinesForDisciplinesTableWithPeriod($input: SearchStudentDisciplinesInput!, $studyPeriodEndDate: String, $studentId: UUID!) {
+    query SearchStudentDisciplinesForDisciplinesTableWithPeriod($input: SearchStudentDisciplinesInput!, $studyPeriodEndDate: String) {
       searchStudentDisciplines(input: $input) {
         studentId
         disciplineId
@@ -255,8 +254,7 @@ export const getDiaryData = async (token: string, userId: string): Promise<Diary
     input: {
       studentId: userId
     },
-    studyPeriodEndDate: "2025-06-29T21:00:00.000Z", // You might want to make this dynamic
-    studentId: userId
+    studyPeriodEndDate: "2025-06-29T21:00:00.000Z"
   };
   
   const headers = { 
