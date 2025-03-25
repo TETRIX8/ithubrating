@@ -20,6 +20,7 @@ const Index = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [diaryData, setDiaryData] = useState<DiaryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // Fix: Ensure all possible states are included in the step type
   const [step, setStep] = useState<"splash" | "login" | "loading" | "data" | "leaderboard">("splash");
   const [students, setStudents] = useState<StudentRankProps[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
