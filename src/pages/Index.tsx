@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/LoginForm";
@@ -20,13 +19,11 @@ const Index = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [diaryData, setDiaryData] = useState<DiaryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  // Fix: Ensure all possible states are included in the step type
   const [step, setStep] = useState<"splash" | "login" | "loading" | "data" | "leaderboard">("splash");
   const [students, setStudents] = useState<StudentRankProps[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
   useEffect(() => {
-    // Initialize with splash screen
     if (step === "splash") {
       const timer = setTimeout(() => {
         setStep("leaderboard");
@@ -42,7 +39,6 @@ const Index = () => {
     try {
       const leaderboardData = await getLeaderboardData();
       
-      // Convert to StudentRankProps format with rank
       const rankedStudents = leaderboardData.map((student, index) => ({
         ...student,
         rank: index + 1
@@ -63,26 +59,22 @@ const Index = () => {
     setStep("loading");
     
     try {
-      // Store the token for other pages to use
       localStorage.setItem("accessToken", token);
       
-      // Artificial delay to show the loading animation
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Fetch user data
       const data = await getUserData(token);
       setUserData(data);
       
-      // Store the student ID for the diary page and fetch diary data
       localStorage.setItem("studentId", data.id);
       
+      console.log("Fetching diary data for student ID:", data.id);
       const diary = await getDiaryData(token, data.id);
       setDiaryData(diary);
+      console.log("Diary data received:", diary);
       
-      // Process and store LXP data
       await processLxpData(data, diary);
       
-      // Reload leaderboard data after processing
       await loadLeaderboardData();
       
       setStep("data");
@@ -118,7 +110,6 @@ const Index = () => {
     setStep("login");
   };
 
-  // Show splash screen
   if (step === "splash") {
     return <SplashScreen onComplete={() => setStep("leaderboard")} />;
   }

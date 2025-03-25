@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -117,6 +116,8 @@ const parseGrade = (grade: string | null | undefined): number => {
 // Store student profile in Supabase
 export const storeStudentProfile = async (profile: StudentProfileData): Promise<void> => {
   try {
+    console.log("Storing student profile:", profile);
+    
     const { error } = await supabase
       .from('student_profiles')
       .upsert({
@@ -125,9 +126,16 @@ export const storeStudentProfile = async (profile: StudentProfileData): Promise<
         last_name: profile.lastName,
         email: profile.email,
         avatar_url: profile.avatarUrl
+      }, {
+        onConflict: 'student_id'
       });
     
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("Supabase error storing profile:", error);
+      throw new Error(error.message);
+    }
+    
+    console.log("Student profile stored successfully");
   } catch (error: any) {
     console.error("Error storing student profile:", error);
     throw new Error(`Failed to store student profile: ${error.message}`);
@@ -137,6 +145,8 @@ export const storeStudentProfile = async (profile: StudentProfileData): Promise<
 // Store student performance data in Supabase
 export const storeStudentPerformance = async (performance: StudentPerformanceData): Promise<void> => {
   try {
+    console.log("Storing student performance:", performance);
+    
     const { error } = await supabase
       .from('student_performance')
       .upsert({
@@ -147,9 +157,16 @@ export const storeStudentPerformance = async (performance: StudentPerformanceDat
         score_points: performance.scorePoints,
         max_score_points: performance.maxScorePoints,
         average_grade: performance.averageGrade
+      }, {
+        onConflict: 'student_id,study_period_name'
       });
     
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("Supabase error storing performance:", error);
+      throw new Error(error.message);
+    }
+    
+    console.log("Student performance stored successfully");
   } catch (error: any) {
     console.error("Error storing student performance:", error);
     throw new Error(`Failed to store student performance: ${error.message}`);
@@ -164,6 +181,8 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
       return;
     }
     
+    console.log("Processing LXP data for user:", userData.id);
+    
     // Store student profile
     const profile: StudentProfileData = {
       id: userData.id,
@@ -177,6 +196,7 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
     
     // Calculate and store performance data
     const performanceData = calculateStudentPerformance(diaryData);
+    console.log("Calculated performance data:", performanceData);
     
     for (const performance of performanceData) {
       await storeStudentPerformance(performance);
