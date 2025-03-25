@@ -58,6 +58,7 @@
   .typing-demo {
     @apply overflow-hidden whitespace-nowrap border-r-4 border-primary;
     animation: typing 3.5s steps(40, end), blink 1s step-end infinite;
+    width: fit-content;
   }
   
   .shimmer {
@@ -84,3 +85,28 @@
     animation-delay: 0.4s;
   }
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink {
+  from, to { border-color: transparent }
+  50% { border-color: currentColor; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
