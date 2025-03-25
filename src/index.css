@@ -84,10 +84,6 @@
   .loader-dot:nth-child(3) {
     animation-delay: 0.4s;
   }
-
-  .spin-slow {
-    animation: spin 3s linear infinite;
-  }
 }
 
 @keyframes shimmer {
@@ -114,27 +110,3 @@
   50% { transform: translateY(-15px); }
 }
 
-@keyframes pulse-soft {
-  0%, 100% { transform: scale(0.8); opacity: 0.5; }
-  50% { transform: scale(1.2); opacity: 1; }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes spin-slow {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes slide-up {
-  0% { transform: translateY(20px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes slide-in-right {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(0); }
-}

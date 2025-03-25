@@ -2,21 +2,17 @@
 import React, { useState, useEffect } from "react";
 import LoginForm from "@/components/LoginForm";
 import ApiResponse from "@/components/ApiResponse";
-import DiaryView from "@/components/DiaryView";
 import Loading from "@/components/Loading";
 import SplashScreen from "@/components/SplashScreen";
-import { getUserData, UserData, getDiaryData, DiaryData } from "@/utils/api";
+import { getUserData, UserData } from "@/utils/api";
 import { toast } from "sonner";
 import { Github } from "lucide-react";
 
 const Index = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [diaryData, setDiaryData] = useState<DiaryData[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDiaryLoading, setIsDiaryLoading] = useState(false);
   const [step, setStep] = useState<"splash" | "login" | "loading" | "data">("splash");
-  const [activeView, setActiveView] = useState<"profile" | "diary">("profile");
 
   useEffect(() => {
     // Initialize with splash screen
@@ -42,29 +38,12 @@ const Index = () => {
       setUserData(data);
       setStep("data");
       toast.success("Авторизация успешна");
-      
-      // Load diary data after user data is loaded
-      loadDiaryData(token, data.id);
-      
     } catch (error) {
       console.error("Error fetching user data:", error);
       setStep("login");
       toast.error("Ошибка при получении данных пользователя");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadDiaryData = async (token: string, userId: string) => {
-    setIsDiaryLoading(true);
-    try {
-      const data = await getDiaryData(token, userId);
-      setDiaryData(data);
-    } catch (error) {
-      console.error("Error fetching diary data:", error);
-      toast.error("Ошибка при получении данных дневника");
-    } finally {
-      setIsDiaryLoading(false);
     }
   };
 
@@ -76,7 +55,6 @@ const Index = () => {
   const resetToLogin = () => {
     setAccessToken(null);
     setUserData(null);
-    setDiaryData(null);
     setStep("login");
   };
 
@@ -149,39 +127,7 @@ const Index = () => {
             {step === "loading" && <Loading />}
             
             {step === "data" && userData && accessToken && (
-              <div className="w-full animate-fade-in">
-                {/* Navigation tabs */}
-                <div className="flex justify-center mb-8">
-                  <div className="flex space-x-2 p-1 bg-gray-100 rounded-lg">
-                    <button
-                      className={`px-4 py-2 rounded-md transition-colors ${
-                        activeView === "profile"
-                          ? "bg-white shadow-sm text-primary"
-                          : "text-gray-600 hover:text-primary"
-                      }`}
-                      onClick={() => setActiveView("profile")}
-                    >
-                      Профиль
-                    </button>
-                    <button
-                      className={`px-4 py-2 rounded-md transition-colors ${
-                        activeView === "diary"
-                          ? "bg-white shadow-sm text-primary"
-                          : "text-gray-600 hover:text-primary"
-                      }`}
-                      onClick={() => setActiveView("diary")}
-                    >
-                      Дневник
-                    </button>
-                  </div>
-                </div>
-                
-                {activeView === "profile" ? (
-                  <ApiResponse userData={userData} accessToken={accessToken} />
-                ) : (
-                  <DiaryView diaryData={diaryData} isLoading={isDiaryLoading} />
-                )}
-              </div>
+              <ApiResponse userData={userData} accessToken={accessToken} />
             )}
           </div>
         </div>
