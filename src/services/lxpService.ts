@@ -1,8 +1,9 @@
 import axios from "axios";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const API_URL = "https://api.newlxp.ru/graphql";
+const LEADERBOARD_STORAGE_KEY = "lxp_leaderboard_data";
+const USER_CONSENT_KEY = "lxp_user_consent";
 
 // Type definitions
 export interface StudentProfileData {
@@ -113,28 +114,81 @@ const parseGrade = (grade: string | null | undefined): number => {
   return gradeMap[grade] || 0;
 };
 
-// Store student profile in Supabase
+// Check if user has given consent
+export const hasUserConsent = (userId: string): boolean => {
+  const consentData = localStorage.getItem(USER_CONSENT_KEY);
+  if (!consentData) return false;
+  
+  try {
+    const consents = JSON.parse(consentData);
+    return consents.includes(userId);
+  } catch (error) {
+    console.error("Error checking user consent:", error);
+    return false;
+  }
+};
+
+// Save user consent
+export const saveUserConsent = (userId: string): void => {
+  try {
+    const existingData = localStorage.getItem(USER_CONSENT_KEY);
+    let consents: string[] = [];
+    
+    if (existingData) {
+      consents = JSON.parse(existingData);
+    }
+    
+    if (!consents.includes(userId)) {
+      consents.push(userId);
+      localStorage.setItem(USER_CONSENT_KEY, JSON.stringify(consents));
+    }
+  } catch (error) {
+    console.error("Error saving user consent:", error);
+  }
+};
+
+// Remove user consent
+export const removeUserConsent = (userId: string): void => {
+  try {
+    const existingData = localStorage.getItem(USER_CONSENT_KEY);
+    if (!existingData) return;
+    
+    let consents: string[] = JSON.parse(existingData);
+    consents = consents.filter(id => id !== userId);
+    localStorage.setItem(USER_CONSENT_KEY, JSON.stringify(consents));
+    
+    // Also remove user data from leaderboard
+    removeFromLeaderboard(userId);
+  } catch (error) {
+    console.error("Error removing user consent:", error);
+  }
+};
+
+// Store student profile in local storage
 export const storeStudentProfile = async (profile: StudentProfileData): Promise<void> => {
   try {
     console.log("Storing student profile:", profile);
     
-    const { error } = await supabase
-      .from('student_profiles')
-      .upsert({
-        student_id: profile.id,
-        first_name: profile.firstName,
-        last_name: profile.lastName,
-        email: profile.email,
-        avatar_url: profile.avatarUrl
-      }, {
-        onConflict: 'student_id'
-      });
+    const existingData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
+    let leaderboardData: Record<string, any> = {};
     
-    if (error) {
-      console.error("Supabase error storing profile:", error);
-      throw new Error(error.message);
+    if (existingData) {
+      leaderboardData = JSON.parse(existingData);
     }
     
+    if (!leaderboardData.profiles) {
+      leaderboardData.profiles = {};
+    }
+    
+    leaderboardData.profiles[profile.id] = {
+      student_id: profile.id,
+      first_name: profile.firstName,
+      last_name: profile.lastName,
+      email: profile.email,
+      avatar_url: profile.avatarUrl
+    };
+    
+    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboardData));
     console.log("Student profile stored successfully");
   } catch (error: any) {
     console.error("Error storing student profile:", error);
@@ -142,34 +196,76 @@ export const storeStudentProfile = async (profile: StudentProfileData): Promise<
   }
 };
 
-// Store student performance data in Supabase
+// Store student performance data in local storage
 export const storeStudentPerformance = async (performance: StudentPerformanceData): Promise<void> => {
   try {
     console.log("Storing student performance:", performance);
     
-    const { error } = await supabase
-      .from('student_performance')
-      .upsert({
-        student_id: performance.studentId,
-        study_period_name: performance.studyPeriodName,
-        study_period_status: performance.studyPeriodStatus,
-        attendance_percent: performance.attendancePercent,
-        score_points: performance.scorePoints,
-        max_score_points: performance.maxScorePoints,
-        average_grade: performance.averageGrade
-      }, {
-        onConflict: 'student_id,study_period_name'
-      });
+    const existingData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
+    let leaderboardData: Record<string, any> = {};
     
-    if (error) {
-      console.error("Supabase error storing performance:", error);
-      throw new Error(error.message);
+    if (existingData) {
+      leaderboardData = JSON.parse(existingData);
     }
     
+    if (!leaderboardData.performances) {
+      leaderboardData.performances = [];
+    }
+    
+    // Check if performance entry already exists and update it
+    const existingIndex = leaderboardData.performances.findIndex((p: any) => 
+      p.student_id === performance.studentId && p.study_period_name === performance.studyPeriodName
+    );
+    
+    const performanceEntry = {
+      student_id: performance.studentId,
+      study_period_name: performance.studyPeriodName,
+      study_period_status: performance.studyPeriodStatus,
+      attendance_percent: performance.attendancePercent,
+      score_points: performance.scorePoints,
+      max_score_points: performance.maxScorePoints,
+      average_grade: performance.averageGrade
+    };
+    
+    if (existingIndex >= 0) {
+      leaderboardData.performances[existingIndex] = performanceEntry;
+    } else {
+      leaderboardData.performances.push(performanceEntry);
+    }
+    
+    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboardData));
     console.log("Student performance stored successfully");
   } catch (error: any) {
     console.error("Error storing student performance:", error);
     throw new Error(`Failed to store student performance: ${error.message}`);
+  }
+};
+
+// Remove student from leaderboard
+export const removeFromLeaderboard = (studentId: string): void => {
+  try {
+    const existingData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
+    if (!existingData) return;
+    
+    let leaderboardData = JSON.parse(existingData);
+    
+    // Remove profile
+    if (leaderboardData.profiles && leaderboardData.profiles[studentId]) {
+      delete leaderboardData.profiles[studentId];
+    }
+    
+    // Remove performances
+    if (leaderboardData.performances) {
+      leaderboardData.performances = leaderboardData.performances.filter(
+        (p: any) => p.student_id !== studentId
+      );
+    }
+    
+    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboardData));
+    toast.success("Данные успешно удалены из рейтинга");
+  } catch (error) {
+    console.error("Error removing from leaderboard:", error);
+    toast.error("Ошибка при удалении данных из рейтинга");
   }
 };
 
@@ -182,6 +278,12 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
     }
     
     console.log("Processing LXP data for user:", userData.id);
+    
+    // Check user consent before storing
+    if (!hasUserConsent(userData.id)) {
+      console.log("User has not given consent, skipping data storage");
+      return;
+    }
     
     // Store student profile
     const profile: StudentProfileData = {
@@ -212,26 +314,22 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
 // Get leaderboard data for current study period
 export const getLeaderboardData = async (): Promise<StudentLeaderboardEntry[]> => {
   try {
+    const existingData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
+    if (!existingData) return [];
+    
+    const leaderboardData = JSON.parse(existingData);
+    if (!leaderboardData.profiles || !leaderboardData.performances) return [];
+    
     // Get all student performances for the current/latest period
-    const { data: performances, error: performanceError } = await supabase
-      .from('student_performance')
-      .select('*')
-      .eq('study_period_status', 'STARTED');
-    
-    if (performanceError) throw new Error(performanceError.message);
-    
-    // Get all student profiles
-    const { data: profiles, error: profileError } = await supabase
-      .from('student_profiles')
-      .select('*');
-    
-    if (profileError) throw new Error(profileError.message);
+    const performances = leaderboardData.performances.filter(
+      (p: any) => p.study_period_status === 'STARTED'
+    );
     
     // Create a map of student profiles by ID for easy lookup
-    const profileMap = profiles.reduce((map: Record<string, any>, profile: any) => {
-      map[profile.student_id] = profile;
-      return map;
-    }, {});
+    const profileMap: Record<string, any> = {};
+    Object.values(leaderboardData.profiles).forEach((profile: any) => {
+      profileMap[profile.student_id] = profile;
+    });
     
     // Create leaderboard entries by combining profile and performance data
     const leaderboardEntries = performances.map((performance: any) => {
@@ -268,5 +366,9 @@ export default {
   processLxpData,
   getLeaderboardData,
   storeStudentProfile,
-  storeStudentPerformance
+  storeStudentPerformance,
+  hasUserConsent,
+  saveUserConsent,
+  removeUserConsent,
+  removeFromLeaderboard
 };

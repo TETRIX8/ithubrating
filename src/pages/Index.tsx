@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/LoginForm";
@@ -7,11 +8,23 @@ import SplashScreen from "@/components/SplashScreen";
 import LeaderboardHeader from "@/components/LeaderboardHeader";
 import LeaderboardList from "@/components/LeaderboardList";
 import TopStudentsSection from "@/components/TopStudentsSection";
+import ConsentDialog from "@/components/ConsentDialog";
+import ProfileOptions from "@/components/ProfileOptions";
 import { getUserData, UserData, getDiaryData, DiaryData } from "@/utils/api";
 import { StudentRankProps } from "@/components/StudentRankCard";
 import { toast } from "sonner";
-import { Github, Book } from "lucide-react";
-import { processLxpData, getLeaderboardData } from "@/services/lxpService";
+import { Github, Book, User } from "lucide-react";
+import { 
+  processLxpData, 
+  getLeaderboardData, 
+  hasUserConsent, 
+  saveUserConsent 
+} from "@/services/lxpService";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type AppStep = "splash" | "login" | "loading" | "data" | "leaderboard";
 
@@ -24,6 +37,7 @@ const Index = () => {
   const [step, setStep] = useState<AppStep>("splash");
   const [students, setStudents] = useState<StudentRankProps[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
 
   useEffect(() => {
     if (step === "splash") {
@@ -32,9 +46,34 @@ const Index = () => {
         loadLeaderboardData();
       }, 5000);
       
+      // Check for stored token and try to restore session
+      const storedToken = localStorage.getItem("accessToken");
+      if (storedToken) {
+        const storedStudentId = localStorage.getItem("studentId");
+        if (storedStudentId) {
+          restoreUserSession(storedToken, storedStudentId);
+        }
+      }
+      
       return () => clearTimeout(timer);
     }
   }, []);
+
+  const restoreUserSession = async (token: string, studentId: string) => {
+    try {
+      const userData = await getUserData(token);
+      setUserData(userData);
+      setAccessToken(token);
+      
+      // If we restore the session, we don't need to show the consent dialog again
+      // as user has already given consent before
+    } catch (error) {
+      console.error("Failed to restore session:", error);
+      // Clear invalid stored data
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("studentId");
+    }
+  };
 
   const loadLeaderboardData = async () => {
     setIsLoadingLeaderboard(true);
@@ -75,12 +114,18 @@ const Index = () => {
       setDiaryData(diary);
       console.log("Diary data received:", diary);
       
-      await processLxpData(data, diary);
-      
-      await loadLeaderboardData();
-      
-      setStep("data");
-      toast.success("Авторизация успешна. Данные добавлены в рейтинг.");
+      // Check if user has already given consent
+      if (!hasUserConsent(data.id)) {
+        // Show consent dialog
+        setStep("data");
+        setShowConsentDialog(true);
+      } else {
+        // User has already given consent, process data
+        await processLxpData(data, diary);
+        await loadLeaderboardData();
+        setStep("data");
+        toast.success("Авторизация успешна. Данные уже в рейтинге.");
+      }
     } catch (error) {
       console.error("Error fetching user data:", error);
       setStep("leaderboard");
@@ -88,6 +133,25 @@ const Index = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleConsentAccept = async () => {
+    if (userData && diaryData) {
+      // Save user consent
+      saveUserConsent(userData.id);
+      
+      // Process and store data
+      await processLxpData(userData, diaryData);
+      await loadLeaderboardData();
+      
+      toast.success("Данные добавлены в рейтинг");
+    }
+    setShowConsentDialog(false);
+  };
+
+  const handleConsentDecline = () => {
+    setShowConsentDialog(false);
+    toast.info("Данные не будут добавлены в рейтинг");
   };
 
   const handleLoginError = (error: Error) => {
@@ -131,8 +195,8 @@ const Index = () => {
       case "loading":
         return <Loading />;
       case "data":
-        return userData && accessToken ? (
-          <ApiResponse userData={userData} accessToken={accessToken} />
+        return userData ? (
+          <ProfileOptions userData={userData} onLogout={resetToLogin} />
         ) : null;
       case "leaderboard":
         return (
@@ -189,14 +253,44 @@ const Index = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            {step === "data" && (
-              <button
-                onClick={() => navigate("/diary")}
-                className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
-              >
-                <Book size={20} />
-                <span className="hidden sm:inline">Дневник</span>
-              </button>
+            {userData && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
+                    <User size={20} />
+                    <span className="hidden sm:inline">{userData.firstName}</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-60 p-0">
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      {userData.avatar ? (
+                        <img 
+                          src={userData.avatar} 
+                          alt={userData.firstName} 
+                          className="h-10 w-10 rounded-full"
+                        />
+                      ) : (
+                        <User className="h-10 w-10 p-2 bg-gray-100 rounded-full" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{userData.firstName} {userData.lastName}</p>
+                        <p className="text-xs text-gray-500 truncate">{userData.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 mt-3">
+                      <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => navigate("/diary")}>
+                        <Book className="mr-2 h-4 w-4" />
+                        Дневник
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start text-red-500 hover:text-red-600" onClick={resetToLogin}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Выйти
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
             
             <a 
@@ -215,15 +309,6 @@ const Index = () => {
                 className="text-primary hover:text-primary/80 transition-colors"
               >
                 Войти
-              </button>
-            )}
-            
-            {step === "data" && (
-              <button
-                onClick={resetToLogin}
-                className="text-gray-600 hover:text-primary transition-colors"
-              >
-                Выйти
               </button>
             )}
             
@@ -252,6 +337,14 @@ const Index = () => {
           </p>
         </div>
       </footer>
+      
+      {/* Consent Dialog */}
+      <ConsentDialog 
+        open={showConsentDialog}
+        onOpenChange={setShowConsentDialog}
+        onAccept={handleConsentAccept}
+        onDecline={handleConsentDecline}
+      />
     </div>
   );
 };
