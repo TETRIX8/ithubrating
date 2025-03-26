@@ -6,6 +6,7 @@ import { removeUserConsent } from "@/services/lxpService";
 import { UserData } from "@/utils/api";
 import { UserCircle, LogOut, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 interface ProfileOptionsProps {
   userData: UserData;
@@ -24,21 +25,34 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-      <div className="flex items-center space-x-4 mb-6">
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white/90 backdrop-blur-md rounded-lg shadow-lg p-6 max-w-md mx-auto border border-white/50"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
         {userData.avatar ? (
-          <img 
+          <motion.img 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2 }}
             src={userData.avatar} 
             alt={`${userData.firstName}`} 
-            className="h-16 w-16 rounded-full"
+            className="h-20 w-20 rounded-full object-cover mx-auto sm:mx-0 ring-4 ring-primary/20"
           />
         ) : (
-          <div className="h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center">
-            <UserCircle className="h-12 w-12 text-gray-400" />
-          </div>
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="h-20 w-20 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full flex items-center justify-center mx-auto sm:mx-0 ring-4 ring-primary/10"
+          >
+            <UserCircle className="h-14 w-14 text-primary/60" />
+          </motion.div>
         )}
-        <div>
-          <h2 className="text-xl font-bold">
+        <div className="text-center sm:text-left">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent">
             {userData.firstName}
           </h2>
           <p className="text-gray-600">{userData.email}</p>
@@ -48,12 +62,12 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
       <div className="space-y-4">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="w-full flex items-center gap-2">
+            <Button variant="destructive" className="w-full flex items-center gap-2 hover:bg-destructive/90 transition-colors">
               <XCircle size={18} />
               Удалить меня из рейтинга
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent className="bg-white/95 backdrop-blur-lg border border-white/30">
             <AlertDialogHeader>
               <AlertDialogTitle>Удаление из рейтинга</AlertDialogTitle>
               <AlertDialogDescription>
@@ -71,14 +85,14 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
 
         <Button 
           variant="outline" 
-          className="w-full flex items-center gap-2"
+          className="w-full flex items-center gap-2 border-primary/20 hover:border-primary/40 transition-colors"
           onClick={onLogout}
         >
           <LogOut size={18} />
           Выйти
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

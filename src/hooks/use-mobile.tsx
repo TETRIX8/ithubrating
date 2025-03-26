@@ -1,19 +1,42 @@
+
 import * as React from "react"
 
-const MOBILE_BREAKPOINT = 768
+export const BREAKPOINTS = {
+  mobile: 640,  // sm
+  tablet: 768,  // md
+  desktop: 1024 // lg
+}
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+export function useBreakpoint() {
+  const [breakpoint, setBreakpoint] = React.useState<{
+    isMobile: boolean;
+    isTablet: boolean;
+    isDesktop: boolean;
+  }>({
+    isMobile: false,
+    isTablet: false,
+    isDesktop: false
+  })
 
   React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    const updateBreakpoint = () => {
+      const width = window.innerWidth
+      setBreakpoint({
+        isMobile: width < BREAKPOINTS.mobile,
+        isTablet: width >= BREAKPOINTS.mobile && width < BREAKPOINTS.desktop,
+        isDesktop: width >= BREAKPOINTS.desktop
+      })
     }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
+
+    updateBreakpoint()
+    window.addEventListener("resize", updateBreakpoint)
+    return () => window.removeEventListener("resize", updateBreakpoint)
   }, [])
 
-  return !!isMobile
+  return breakpoint
+}
+
+export function useIsMobile() {
+  const { isMobile } = useBreakpoint()
+  return isMobile
 }
