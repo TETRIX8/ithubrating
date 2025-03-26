@@ -13,7 +13,7 @@ import ProfileOptions from "@/components/ProfileOptions";
 import { getUserData, UserData, getDiaryData, DiaryData } from "@/utils/api";
 import { StudentRankProps } from "@/components/StudentRankCard";
 import { toast } from "sonner";
-import { Github, Book, User } from "lucide-react";
+import { Github, Book, User, LogOut } from "lucide-react";
 import { 
   processLxpData, 
   getLeaderboardData, 
@@ -25,6 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 type AppStep = "splash" | "login" | "loading" | "data" | "leaderboard";
 
@@ -217,12 +218,12 @@ const Index = () => {
                 <p className="text-muted-foreground mb-4">
                   Пока нет данных в рейтинге. Войдите в систему, чтобы добавить себя!
                 </p>
-                <button
+                <Button
                   onClick={switchToLogin}
                   className="bg-primary text-white rounded-lg px-4 py-2.5 hover:bg-primary/90 transition-colors"
                 >
                   Авторизоваться
-                </button>
+                </Button>
               </div>
             )}
           </>
@@ -256,10 +257,10 @@ const Index = () => {
             {userData && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
+                  <Button variant="ghost" size="icon" className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
                     <User size={20} />
                     <span className="hidden sm:inline">{userData.firstName}</span>
-                  </button>
+                  </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-60 p-0">
                   <div className="p-4">
@@ -274,7 +275,7 @@ const Index = () => {
                         <User className="h-10 w-10 p-2 bg-gray-100 rounded-full" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{userData.firstName} {userData.lastName}</p>
+                        <p className="font-medium truncate">{userData.firstName}</p>
                         <p className="text-xs text-gray-500 truncate">{userData.email}</p>
                       </div>
                     </div>
@@ -304,21 +305,23 @@ const Index = () => {
             </a>
             
             {step === "leaderboard" && !userData && (
-              <button
+              <Button
                 onClick={switchToLogin}
+                variant="ghost"
                 className="text-primary hover:text-primary/80 transition-colors"
               >
                 Войти
-              </button>
+              </Button>
             )}
             
             {step !== "leaderboard" && step !== "splash" && (
-              <button
+              <Button
                 onClick={switchToLeaderboard}
+                variant="ghost"
                 className="text-gray-600 hover:text-primary transition-colors"
               >
                 Рейтинг
-              </button>
+              </Button>
             )}
           </div>
         </div>

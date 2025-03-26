@@ -22,7 +22,7 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
         {userData.avatar ? (
           <img 
             src={userData.avatar} 
-            alt={`${userData.firstName} ${userData.lastName}`} 
+            alt={`${userData.firstName}`} 
             className="h-16 w-16 rounded-full"
           />
         ) : (
@@ -32,7 +32,7 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
         )}
         <div>
           <h2 className="text-xl font-bold">
-            {userData.firstName} {userData.lastName}
+            {userData.firstName}
           </h2>
           <p className="text-gray-600">{userData.email}</p>
         </div>
