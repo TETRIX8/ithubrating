@@ -60,7 +60,7 @@ const StudentRankCard: React.FC<StudentRankProps> = ({
         </div>
         
         <Avatar className="h-10 w-10 border-2 border-primary/20">
-          <AvatarImage src={avatarUrl} alt={`${firstName} ${lastName}`} />
+          <AvatarImage src={avatarUrl} alt={`${firstName} ${}`} />
           <AvatarFallback className="bg-primary/10 text-primary">
             {initials}
           </AvatarFallback>
