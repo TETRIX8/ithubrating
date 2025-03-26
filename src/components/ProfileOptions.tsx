@@ -13,9 +13,14 @@ interface ProfileOptionsProps {
 }
 
 const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) => {
-  const handleRemoveFromLeaderboard = () => {
-    removeUserConsent(userData.id);
-    toast.success("Вы были успешно удалены из рейтинга");
+  const handleRemoveFromLeaderboard = async () => {
+    try {
+      await removeUserConsent(userData.id);
+      toast.success("Вы были успешно удалены из рейтинга");
+    } catch (error) {
+      console.error("Error removing from leaderboard:", error);
+      toast.error("Ошибка при удалении из рейтинга");
+    }
   };
 
   return (

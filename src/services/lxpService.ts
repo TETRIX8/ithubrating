@@ -1,11 +1,10 @@
-
 import axios from "axios";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const API_URL = "https://api.newlxp.ru/graphql";
-const LEADERBOARD_STORAGE_KEY = "rating.json";
-const USER_STORAGE_KEY = "author.json";
 const USER_CONSENT_KEY = "lxp_user_consent";
+const USER_STORAGE_KEY = "author.json";
 
 // Type definitions
 export interface StudentProfileData {
@@ -201,106 +200,79 @@ export const clearUserAuth = (): void => {
   console.log("User authentication data cleared");
 };
 
-// Store student profile in local storage
+// Store student profile in Supabase
 export const storeStudentProfile = async (profile: StudentProfileData): Promise<void> => {
   try {
-    console.log("Storing student profile:", profile);
+    console.log("Storing student profile in Supabase:", profile);
     
-    const existingData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
-    let leaderboardData: Record<string, any> = {};
+    const { error } = await supabase
+      .from('student_profiles')
+      .upsert({
+        student_id: profile.id,
+        first_name: profile.firstName,
+        last_name: profile.lastName,
+        email: profile.email,
+        avatar_url: profile.avatarUrl
+      }, { onConflict: 'student_id' });
     
-    if (existingData) {
-      leaderboardData = JSON.parse(existingData);
-    }
-    
-    if (!leaderboardData.profiles) {
-      leaderboardData.profiles = {};
-    }
-    
-    leaderboardData.profiles[profile.id] = {
-      student_id: profile.id,
-      first_name: profile.firstName,
-      last_name: profile.lastName,
-      email: profile.email,
-      avatar_url: profile.avatarUrl
-    };
-    
-    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboardData));
-    console.log("Student profile stored successfully in rating.json");
+    if (error) throw error;
+    console.log("Student profile stored successfully in Supabase");
   } catch (error: any) {
-    console.error("Error storing student profile:", error);
+    console.error("Error storing student profile in Supabase:", error);
     throw new Error(`Failed to store student profile: ${error.message}`);
   }
 };
 
-// Store student performance data in local storage
+// Store student performance data in Supabase
 export const storeStudentPerformance = async (performance: StudentPerformanceData): Promise<void> => {
   try {
-    console.log("Storing student performance:", performance);
+    console.log("Storing student performance in Supabase:", performance);
     
-    const existingData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
-    let leaderboardData: Record<string, any> = {};
+    const { error } = await supabase
+      .from('student_performance')
+      .upsert({
+        student_id: performance.studentId,
+        study_period_name: performance.studyPeriodName,
+        study_period_status: performance.studyPeriodStatus,
+        score_points: performance.scorePoints,
+        max_score_points: performance.maxScorePoints,
+        attendance_percent: performance.attendancePercent,
+        average_grade: performance.averageGrade
+      }, { 
+        onConflict: 'student_id,study_period_name'
+      });
     
-    if (existingData) {
-      leaderboardData = JSON.parse(existingData);
-    }
-    
-    if (!leaderboardData.performances) {
-      leaderboardData.performances = [];
-    }
-    
-    // Check if performance entry already exists and update it
-    const existingIndex = leaderboardData.performances.findIndex((p: any) => 
-      p.student_id === performance.studentId && p.study_period_name === performance.studyPeriodName
-    );
-    
-    const performanceEntry = {
-      student_id: performance.studentId,
-      study_period_name: performance.studyPeriodName,
-      study_period_status: performance.studyPeriodStatus,
-      attendance_percent: performance.attendancePercent,
-      score_points: performance.scorePoints,
-      max_score_points: performance.maxScorePoints,
-      average_grade: performance.averageGrade
-    };
-    
-    if (existingIndex >= 0) {
-      leaderboardData.performances[existingIndex] = performanceEntry;
-    } else {
-      leaderboardData.performances.push(performanceEntry);
-    }
-    
-    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboardData));
-    console.log("Student performance stored successfully in rating.json");
+    if (error) throw error;
+    console.log("Student performance stored successfully in Supabase");
   } catch (error: any) {
-    console.error("Error storing student performance:", error);
+    console.error("Error storing student performance in Supabase:", error);
     throw new Error(`Failed to store student performance: ${error.message}`);
   }
 };
 
 // Remove student from leaderboard
-export const removeFromLeaderboard = (studentId: string): void => {
+export const removeFromLeaderboard = async (studentId: string): Promise<void> => {
   try {
-    const existingData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
-    if (!existingData) return;
-    
-    let leaderboardData = JSON.parse(existingData);
+    console.log("Removing student from leaderboard:", studentId);
     
     // Remove profile
-    if (leaderboardData.profiles && leaderboardData.profiles[studentId]) {
-      delete leaderboardData.profiles[studentId];
-    }
+    const { error: profileError } = await supabase
+      .from('student_profiles')
+      .delete()
+      .eq('student_id', studentId);
+    
+    if (profileError) throw profileError;
     
     // Remove performances
-    if (leaderboardData.performances) {
-      leaderboardData.performances = leaderboardData.performances.filter(
-        (p: any) => p.student_id !== studentId
-      );
-    }
+    const { error: performanceError } = await supabase
+      .from('student_performance')
+      .delete()
+      .eq('student_id', studentId);
     
-    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboardData));
+    if (performanceError) throw performanceError;
+    
     toast.success("Данные успешно удалены из рейтинга");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error removing from leaderboard:", error);
     toast.error("Ошибка при удалении данных из рейтинга");
   }
@@ -354,20 +326,28 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
 // Get leaderboard data for current study period
 export const getLeaderboardData = async (): Promise<StudentLeaderboardEntry[]> => {
   try {
-    const existingData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
-    if (!existingData) return [];
-    
-    const leaderboardData = JSON.parse(existingData);
-    if (!leaderboardData.profiles || !leaderboardData.performances) return [];
+    console.log("Fetching leaderboard data from Supabase");
     
     // Get all student performances for the current/latest period
-    const performances = leaderboardData.performances.filter(
-      (p: any) => p.study_period_status === 'STARTED'
-    );
+    const { data: performances, error: performanceError } = await supabase
+      .from('student_performance')
+      .select('*')
+      .eq('study_period_status', 'STARTED');
+    
+    if (performanceError) throw performanceError;
+    if (!performances || performances.length === 0) return [];
+    
+    // Get all student profiles
+    const { data: profiles, error: profileError } = await supabase
+      .from('student_profiles')
+      .select('*');
+    
+    if (profileError) throw profileError;
+    if (!profiles) return [];
     
     // Create a map of student profiles by ID for easy lookup
     const profileMap: Record<string, any> = {};
-    Object.values(leaderboardData.profiles).forEach((profile: any) => {
+    profiles.forEach((profile: any) => {
       profileMap[profile.student_id] = profile;
     });
     
@@ -396,7 +376,7 @@ export const getLeaderboardData = async (): Promise<StudentLeaderboardEntry[]> =
       return scoreB - scoreA;
     });
   } catch (error: any) {
-    console.error("Error fetching leaderboard data:", error);
+    console.error("Error fetching leaderboard data from Supabase:", error);
     toast.error(`Ошибка получения данных рейтинга: ${error.message}`);
     return [];
   }
