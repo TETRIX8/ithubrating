@@ -1,8 +1,10 @@
+
 import axios from "axios";
 import { toast } from "sonner";
 
 const API_URL = "https://api.newlxp.ru/graphql";
-const LEADERBOARD_STORAGE_KEY = "lxp_leaderboard_data";
+const LEADERBOARD_STORAGE_KEY = "rating.json";
+const USER_STORAGE_KEY = "author.json";
 const USER_CONSENT_KEY = "lxp_user_consent";
 
 // Type definitions
@@ -164,6 +166,41 @@ export const removeUserConsent = (userId: string): void => {
   }
 };
 
+// Save user authentication data
+export const saveUserAuth = (userData: any): void => {
+  try {
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({
+      id: userData.id,
+      firstName: userData.firstName,
+      email: userData.email,
+      avatar: userData.avatar,
+      token: localStorage.getItem("accessToken")
+    }));
+    console.log("User authentication data saved to author.json");
+  } catch (error) {
+    console.error("Error saving user auth data:", error);
+  }
+};
+
+// Get user authentication data
+export const getUserAuth = (): any => {
+  try {
+    const userData = localStorage.getItem(USER_STORAGE_KEY);
+    if (!userData) return null;
+    
+    return JSON.parse(userData);
+  } catch (error) {
+    console.error("Error getting user auth data:", error);
+    return null;
+  }
+};
+
+// Clear user authentication data
+export const clearUserAuth = (): void => {
+  localStorage.removeItem(USER_STORAGE_KEY);
+  console.log("User authentication data cleared");
+};
+
 // Store student profile in local storage
 export const storeStudentProfile = async (profile: StudentProfileData): Promise<void> => {
   try {
@@ -189,7 +226,7 @@ export const storeStudentProfile = async (profile: StudentProfileData): Promise<
     };
     
     localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboardData));
-    console.log("Student profile stored successfully");
+    console.log("Student profile stored successfully in rating.json");
   } catch (error: any) {
     console.error("Error storing student profile:", error);
     throw new Error(`Failed to store student profile: ${error.message}`);
@@ -234,7 +271,7 @@ export const storeStudentPerformance = async (performance: StudentPerformanceDat
     }
     
     localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboardData));
-    console.log("Student performance stored successfully");
+    console.log("Student performance stored successfully in rating.json");
   } catch (error: any) {
     console.error("Error storing student performance:", error);
     throw new Error(`Failed to store student performance: ${error.message}`);
@@ -279,7 +316,10 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
     
     console.log("Processing LXP data for user:", userData.id);
     
-    // Check user consent before storing
+    // Save user authentication data
+    saveUserAuth(userData);
+    
+    // Check user consent before storing in leaderboard
     if (!hasUserConsent(userData.id)) {
       console.log("User has not given consent, skipping data storage");
       return;
@@ -370,5 +410,8 @@ export default {
   hasUserConsent,
   saveUserConsent,
   removeUserConsent,
-  removeFromLeaderboard
+  removeFromLeaderboard,
+  saveUserAuth,
+  getUserAuth,
+  clearUserAuth
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/LoginForm";
@@ -18,7 +17,9 @@ import {
   processLxpData, 
   getLeaderboardData, 
   hasUserConsent, 
-  saveUserConsent 
+  saveUserConsent,
+  getUserAuth,
+  clearUserAuth
 } from "@/services/lxpService";
 import { 
   Popover,
@@ -47,32 +48,24 @@ const Index = () => {
         loadLeaderboardData();
       }, 5000);
       
-      // Check for stored token and try to restore session
-      const storedToken = localStorage.getItem("accessToken");
-      if (storedToken) {
-        const storedStudentId = localStorage.getItem("studentId");
-        if (storedStudentId) {
-          restoreUserSession(storedToken, storedStudentId);
-        }
+      const storedUserData = getUserAuth();
+      if (storedUserData) {
+        restoreUserSession(storedUserData);
       }
       
       return () => clearTimeout(timer);
     }
   }, []);
 
-  const restoreUserSession = async (token: string, studentId: string) => {
+  const restoreUserSession = async (storedUser: any) => {
     try {
-      const userData = await getUserData(token);
-      setUserData(userData);
-      setAccessToken(token);
+      setUserData(storedUser);
+      setAccessToken(storedUser.token);
       
-      // If we restore the session, we don't need to show the consent dialog again
-      // as user has already given consent before
     } catch (error) {
       console.error("Failed to restore session:", error);
-      // Clear invalid stored data
+      clearUserAuth();
       localStorage.removeItem("accessToken");
-      localStorage.removeItem("studentId");
     }
   };
 
@@ -108,20 +101,15 @@ const Index = () => {
       const data = await getUserData(token);
       setUserData(data);
       
-      localStorage.setItem("studentId", data.id);
-      
       console.log("Fetching diary data for student ID:", data.id);
       const diary = await getDiaryData(token, data.id);
       setDiaryData(diary);
       console.log("Diary data received:", diary);
       
-      // Check if user has already given consent
       if (!hasUserConsent(data.id)) {
-        // Show consent dialog
         setStep("data");
         setShowConsentDialog(true);
       } else {
-        // User has already given consent, process data
         await processLxpData(data, diary);
         await loadLeaderboardData();
         setStep("data");
@@ -138,13 +126,9 @@ const Index = () => {
 
   const handleConsentAccept = async () => {
     if (userData && diaryData) {
-      // Save user consent
       saveUserConsent(userData.id);
-      
-      // Process and store data
       await processLxpData(userData, diaryData);
       await loadLeaderboardData();
-      
       toast.success("Данные добавлены в рейтинг");
     }
     setShowConsentDialog(false);
@@ -161,12 +145,13 @@ const Index = () => {
   };
 
   const resetToLogin = () => {
+    clearUserAuth();
     localStorage.removeItem("accessToken");
-    localStorage.removeItem("studentId");
     setAccessToken(null);
     setUserData(null);
     setDiaryData(null);
     setStep("leaderboard");
+    toast.success("Вы вышли из системы");
   };
 
   const switchToLeaderboard = () => {
@@ -341,7 +326,6 @@ const Index = () => {
         </div>
       </footer>
       
-      {/* Consent Dialog */}
       <ConsentDialog 
         open={showConsentDialog}
         onOpenChange={setShowConsentDialog}

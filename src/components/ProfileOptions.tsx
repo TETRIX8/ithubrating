@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { removeUserConsent } from "@/services/lxpService";
 import { UserData } from "@/utils/api";
 import { UserCircle, LogOut, XCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProfileOptionsProps {
   userData: UserData;
@@ -14,6 +15,7 @@ interface ProfileOptionsProps {
 const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) => {
   const handleRemoveFromLeaderboard = () => {
     removeUserConsent(userData.id);
+    toast.success("Вы были успешно удалены из рейтинга");
   };
 
   return (
