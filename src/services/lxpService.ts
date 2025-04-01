@@ -13,6 +13,7 @@ export interface StudentProfileData {
   lastName: string;
   email: string;
   avatarUrl?: string;
+  studyGroup?: string;
 }
 
 export interface StudentPerformanceData {
@@ -23,6 +24,7 @@ export interface StudentPerformanceData {
   scorePoints: number;
   maxScorePoints: number;
   averageGrade: number;
+  studyGroup?: string;
 }
 
 export interface StudentLeaderboardEntry {
@@ -33,6 +35,7 @@ export interface StudentLeaderboardEntry {
   attendancePercent: number;
   scorePercent: number;
   averageGrade: number;
+  studyGroup?: string;
 }
 
 // Process discipline data to calculate student performance
@@ -217,7 +220,8 @@ export const storeStudentProfile = async (profile: StudentProfileData): Promise<
         first_name: profile.firstName,
         last_name: profile.lastName,
         email: profile.email,
-        avatar_url: profile.avatarUrl
+        avatar_url: profile.avatarUrl,
+        study_group: profile.studyGroup
       }, { onConflict: 'student_id' });
     
     if (error) throw error;
@@ -242,7 +246,8 @@ export const storeStudentPerformance = async (performance: StudentPerformanceDat
         score_points: performance.scorePoints,
         max_score_points: performance.maxScorePoints,
         attendance_percent: performance.attendancePercent,
-        average_grade: performance.averageGrade
+        average_grade: performance.averageGrade,
+        study_group: performance.studyGroup
       }, { 
         onConflict: 'student_id,study_period_name'
       });
@@ -293,6 +298,9 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
     
     console.log("Processing LXP data for user:", userData.id);
     
+    // Extract studyGroup from user data if available
+    const studyGroup = userData.group || diaryData?.group?.name || undefined;
+    
     // Save user authentication data
     saveUserAuth(userData);
     
@@ -308,7 +316,8 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
       firstName: userData.firstName,
       lastName: userData.lastName || "Unknown",
       email: userData.email,
-      avatarUrl: userData.avatar
+      avatarUrl: userData.avatar,
+      studyGroup
     };
     
     await storeStudentProfile(profile);
@@ -318,7 +327,11 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
     console.log("Calculated performance data:", performanceData);
     
     for (const performance of performanceData) {
-      await storeStudentPerformance(performance);
+      // Add study group to performance data
+      await storeStudentPerformance({
+        ...performance,
+        studyGroup
+      });
     }
     
     toast.success("Данные успешно загружены и сохранены");
@@ -370,7 +383,8 @@ export const getLeaderboardData = async (): Promise<StudentLeaderboardEntry[]> =
         avatarUrl: profile.avatar_url,
         attendancePercent: performance.attendance_percent,
         scorePercent: Math.round(scorePercent),
-        averageGrade: performance.average_grade
+        averageGrade: performance.average_grade,
+        studyGroup: performance.study_group || profile.study_group
       };
     });
     

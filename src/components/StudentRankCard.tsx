@@ -16,6 +16,7 @@ export interface StudentRankProps {
   attendancePercent: number;
   scorePercent: number;
   averageGrade: number;
+  studyGroup?: string; // Add study group property
 }
 
 const StudentRankCard: React.FC<StudentRankProps> = ({
