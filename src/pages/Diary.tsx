@@ -1,258 +1,150 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDiaryData, DiaryData } from "@/utils/api";
-import Loading from "@/components/Loading";
+import { getUserAuth } from "@/services/lxpService";
+import { getDiaryData, DiaryData, UserData } from "@/utils/api";
 import { toast } from "sonner";
-import { Book, Calendar, ArrowLeft, ChevronRight, BarChart4 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 const Diary = () => {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [diaryData, setDiaryData] = useState<DiaryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"current" | "archived">("current");
-  
+
   useEffect(() => {
-    const fetchDiaryData = async () => {
-      setIsLoading(true);
+    const checkAuth = async () => {
       try {
+        const storedUserData = getUserAuth();
         const token = localStorage.getItem("accessToken");
-        const studentId = localStorage.getItem("studentId");
         
-        if (!token || !studentId) {
-          toast.error("Необходима авторизация");
+        if (!storedUserData || !token) {
+          toast.error("Необходимо авторизоваться");
           navigate("/");
           return;
         }
         
-        const data = await getDiaryData(token, studentId);
-        setDiaryData(data);
+        setUserData(storedUserData);
+        
+        // Load diary data
+        const diary = await getDiaryData(token, storedUserData.id);
+        setDiaryData(diary);
       } catch (error) {
-        console.error("Error fetching diary data:", error);
-        toast.error("Ошибка при получении данных дневника");
+        console.error("Authentication check failed:", error);
+        toast.error("Ошибка авторизации, попробуйте войти снова");
+        navigate("/");
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchDiaryData();
+    checkAuth();
   }, [navigate]);
-  
-  const getGradeColor = (grade: string | number | null) => {
-    if (!grade) return "text-gray-400";
-    
-    if (typeof grade === "string") {
-      switch(grade) {
-        case "FIVE": return "text-green-600 font-medium";
-        case "FOUR": return "text-blue-600 font-medium";
-        case "THREE": return "text-yellow-600 font-medium";
-        case "TWO": return "text-red-600 font-medium";
-        default: return "text-gray-600";
-      }
-    } else {
-      switch(grade) {
-        case 5: return "text-green-600 font-medium";
-        case 4: return "text-blue-600 font-medium";
-        case 3: return "text-yellow-600 font-medium";
-        case 2: return "text-red-600 font-medium";
-        default: return "text-gray-600";
-      }
-    }
-  };
-  
-  const getGradeText = (grade: string | number | null) => {
-    if (!grade) return "—";
-    
-    if (typeof grade === "string") {
-      switch(grade) {
-        case "FIVE": return "5";
-        case "FOUR": return "4";
-        case "THREE": return "3";
-        case "TWO": return "2";
-        default: return grade;
-      }
-    }
-    
-    return grade;
-  };
-  
-  const getAttendanceColor = (percent: number) => {
-    if (percent >= 80) return "bg-green-500";
-    if (percent >= 60) return "bg-yellow-500";
-    return "bg-red-500";
-  };
-  
-  const filterDisciplines = (disciplines: DiaryData["searchStudentDisciplines"]) => {
-    if (activeTab === "current") {
-      return disciplines.filter(d => 
-        d.studyPeriod?.status === "STARTED" || 
-        (Array.isArray(d.studyPeriod) && d.studyPeriod[0]?.status === "STARTED")
-      );
-    } else {
-      return disciplines.filter(d => 
-        d.studyPeriod?.status === "FINISHED" || 
-        (Array.isArray(d.studyPeriod) && d.studyPeriod[0]?.status === "FINISHED")
-      );
-    }
-  };
-  
+
   if (isLoading) {
-    return <Loading text="Загрузка дневника" />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
-  
-  const disciplines = diaryData?.searchStudentDisciplines || [];
-  const filteredDisciplines = filterDisciplines(disciplines);
-  
+
+  if (!userData || !diaryData) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold mb-4">Данные не найдены</h2>
+        <p className="text-gray-600 mb-6">Необходимо авторизоваться, чтобы получить доступ к дневнику</p>
+        <button 
+          onClick={() => navigate("/")}
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          Вернуться на главную
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
-      <header className="py-6 px-8 border-b">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center text-gray-600 hover:text-primary transition-colors"
-            >
-              <ArrowLeft size={20} className="mr-2" />
-              <span>Назад</span>
-            </button>
+    <div className="container mx-auto py-8 px-4">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Дневник студента</h1>
+        <button 
+          onClick={() => navigate("/")}
+          className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Назад
+        </button>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Информация о студенте</h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-gray-600">Имя:</p>
+            <p className="font-medium">{userData.firstName}</p>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-medium flex items-center">
-              <Book className="mr-2" /> Дневник успеваемости
-            </h1>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 px-4 py-8 sm:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setActiveTab("current")}
-                className={`px-4 py-2 rounded-md flex items-center text-sm ${
-                  activeTab === "current" 
-                    ? "bg-white shadow text-primary" 
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                Текущий семестр
-              </button>
-              <button
-                onClick={() => setActiveTab("archived")}
-                className={`px-4 py-2 rounded-md flex items-center text-sm ${
-                  activeTab === "archived" 
-                    ? "bg-white shadow text-primary" 
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                <BarChart4 className="mr-2 h-4 w-4" />
-                Архив оценок
-              </button>
-            </div>
-            
-            <div className="text-gray-600 text-sm">
-              {activeTab === "current" ? "Весенний семестр 24-25" : "Осенний семестр 24-25"}
-            </div>
-          </div>
-          
-          {filteredDisciplines.length > 0 ? (
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[300px]">Предмет</TableHead>
-                    <TableHead>Преподаватель</TableHead>
-                    <TableHead className="text-center">Посещаемость</TableHead>
-                    <TableHead className="text-center">Баллы</TableHead>
-                    <TableHead className="text-center">Итоговая оценка</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDisciplines.map((discipline) => {
-                    const studyPeriod = Array.isArray(discipline.studyPeriod) 
-                      ? discipline.studyPeriod[0] 
-                      : discipline.studyPeriod;
-                      
-                    const teachers = discipline.discipline.teachers.map(t => 
-                      `${t.user.lastName} ${t.user.firstName[0]}.${t.user.middleName ? ` ${t.user.middleName[0]}.` : ''}`
-                    ).join(", ");
-                    
-                    return (
-                      <TableRow key={discipline.disciplineId}>
-                        <TableCell className="font-medium">
-                          {discipline.discipline.name}
-                          <div className="text-xs text-gray-500 mt-1">
-                            {discipline.discipline.code} • {discipline.discipline.studyHoursCount} ч.
-                          </div>
-                        </TableCell>
-                        <TableCell>{teachers || "—"}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-col items-center">
-                            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-                              <div 
-                                className={`h-2.5 rounded-full ${getAttendanceColor(discipline.disciplineAttendance.percent)}`} 
-                                style={{ width: `${discipline.disciplineAttendance.percent}%` }}
-                              ></div>
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {discipline.disciplineAttendance.percent}% ({discipline.disciplineAttendance.visited}/{discipline.disciplineAttendance.total})
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className="font-medium">
-                            {discipline.scoreForAnsweredTasks}
-                          </span>
-                          <span className="text-gray-400">
-                            /{discipline.maxScoreForAnsweredTasks}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className={`text-lg ${getGradeColor(discipline.disciplineGrade_V2)}`}>
-                            {getGradeText(discipline.disciplineGrade_V2)}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center border">
-              <div className="text-gray-500">
-                {activeTab === "current" 
-                  ? "В текущем семестре нет дисциплин" 
-                  : "В архиве нет дисциплин"}
-              </div>
-            </div>
-          )}
-          
-          <div className="mt-6 text-sm text-gray-500 text-center">
-            Данные успеваемости обновляются в конце каждого учебного дня
+          <div>
+            <p className="text-gray-600">Email:</p>
+            <p className="font-medium">{userData.email}</p>
           </div>
         </div>
-      </main>
-
-      <footer className="py-6 px-8 text-center text-gray-500 text-sm border-t">
-        <div className="max-w-7xl mx-auto">
-          <p>
-            Демонстрация работы с API сервиса LXP &copy; {new Date().getFullYear()}
-          </p>
-        </div>
-      </footer>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Успеваемость</h2>
+        
+        {diaryData && diaryData.searchStudentDisciplines && diaryData.searchStudentDisciplines.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border px-4 py-2 text-left">Дисциплина</th>
+                  <th className="border px-4 py-2 text-center">Посещаемость</th>
+                  <th className="border px-4 py-2 text-center">Баллы</th>
+                  <th className="border px-4 py-2 text-center">Оценка</th>
+                </tr>
+              </thead>
+              <tbody>
+                {diaryData.searchStudentDisciplines.map((discipline, index) => (
+                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                    <td className="border px-4 py-3">
+                      <div className="font-medium">{discipline.discipline.name}</div>
+                      <div className="text-sm text-gray-500">
+                        {discipline.studyPeriod.name}
+                      </div>
+                    </td>
+                    <td className="border px-4 py-3 text-center">
+                      <div className="inline-flex items-center">
+                        <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                          discipline.disciplineAttendance.percent >= 70 ? 'bg-green-500' : 
+                          discipline.disciplineAttendance.percent >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}></span>
+                        {discipline.disciplineAttendance.percent}%
+                      </div>
+                    </td>
+                    <td className="border px-4 py-3 text-center">
+                      {discipline.scoreForAnsweredTasks} / {discipline.maxScoreForAnsweredTasks || discipline.discipline.maxScore}
+                    </td>
+                    <td className="border px-4 py-3 text-center">
+                      <span className={`font-medium ${
+                        (discipline.disciplineGrade === 'Отлично' || discipline.disciplineGrade === '5') ? 'text-green-600' :
+                        (discipline.disciplineGrade === 'Хорошо' || discipline.disciplineGrade === '4') ? 'text-blue-600' :
+                        (discipline.disciplineGrade === 'Удовлетворительно' || discipline.disciplineGrade === '3') ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {discipline.disciplineGrade || discipline.disciplineGrade_V2 || 'Н/Д'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            Данные об успеваемости отсутствуют
+          </div>
+        )}
+      </div>
     </div>
   );
 };

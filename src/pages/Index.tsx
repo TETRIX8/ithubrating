@@ -19,6 +19,7 @@ import {
   hasUserConsent, 
   saveUserConsent,
   getUserAuth,
+  saveUserAuth,
   clearUserAuth
 } from "@/services/lxpService";
 import { 
@@ -59,9 +60,14 @@ const Index = () => {
 
   const restoreUserSession = async (storedUser: any) => {
     try {
+      console.log("Restoring user session:", storedUser);
       setUserData(storedUser);
       setAccessToken(storedUser.token);
       
+      // Save token to localStorage for API calls
+      if (storedUser.token) {
+        localStorage.setItem("accessToken", storedUser.token);
+      }
     } catch (error) {
       console.error("Failed to restore session:", error);
       clearUserAuth();
@@ -100,6 +106,12 @@ const Index = () => {
       
       const data = await getUserData(token);
       setUserData(data);
+      
+      // Save user authentication data with token
+      saveUserAuth({
+        ...data,
+        token: token
+      });
       
       console.log("Fetching diary data for student ID:", data.id);
       const diary = await getDiaryData(token, data.id);
@@ -160,6 +172,15 @@ const Index = () => {
 
   const switchToLogin = () => {
     setStep("login");
+  };
+
+  const navigateToDiary = () => {
+    if (userData && accessToken) {
+      navigate("/diary");
+    } else {
+      toast.error("Необходимо авторизоваться");
+      setStep("login");
+    }
   };
 
   const renderContent = () => {

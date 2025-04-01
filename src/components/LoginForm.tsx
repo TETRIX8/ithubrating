@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
 import { signIn } from "@/utils/api";
+import { toast } from "sonner";
 
 interface LoginFormProps {
   onSuccess: (token: string) => void;
@@ -16,15 +17,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
     e.preventDefault();
     
     if (!email || !password) {
+      toast.error("Пожалуйста, заполните все поля");
       return;
     }
     
     setIsLoading(true);
     
     try {
+      console.log("Attempting login with:", { email });
       const token = await signIn({ email, password });
+      
+      if (!token) {
+        throw new Error("Не удалось получить токен авторизации");
+      }
+      
+      console.log("Login successful, token received");
       onSuccess(token);
     } catch (error) {
+      console.error("Login failed:", error);
       onError(error as Error);
     } finally {
       setIsLoading(false);

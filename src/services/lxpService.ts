@@ -168,14 +168,16 @@ export const removeUserConsent = (userId: string): void => {
 // Save user authentication data
 export const saveUserAuth = (userData: any): void => {
   try {
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({
+    const dataToStore = {
       id: userData.id,
       firstName: userData.firstName,
       email: userData.email,
       avatar: userData.avatar,
-      token: localStorage.getItem("accessToken")
-    }));
-    console.log("User authentication data saved to author.json");
+      token: userData.token || localStorage.getItem("accessToken")
+    };
+    
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(dataToStore));
+    console.log("User authentication data saved:", dataToStore);
   } catch (error) {
     console.error("Error saving user auth data:", error);
   }
@@ -187,7 +189,9 @@ export const getUserAuth = (): any => {
     const userData = localStorage.getItem(USER_STORAGE_KEY);
     if (!userData) return null;
     
-    return JSON.parse(userData);
+    const parsedData = JSON.parse(userData);
+    console.log("Retrieved user auth data:", parsedData);
+    return parsedData;
   } catch (error) {
     console.error("Error getting user auth data:", error);
     return null;
@@ -197,6 +201,7 @@ export const getUserAuth = (): any => {
 // Clear user authentication data
 export const clearUserAuth = (): void => {
   localStorage.removeItem(USER_STORAGE_KEY);
+  localStorage.removeItem("accessToken");
   console.log("User authentication data cleared");
 };
 
