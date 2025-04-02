@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Trophy, Award, Medal } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { useBreakpoint } from "@/hooks/use-mobile";
+import RatingStars from "./RatingStars";
 
 export interface StudentRankProps {
   rank: number;
@@ -28,8 +29,10 @@ const StudentRankCard: React.FC<StudentRankProps> = ({
   attendancePercent,
   scorePercent,
   averageGrade,
+  studyGroup
 }) => {
   const { isMobile } = useBreakpoint();
+  const [showRating, setShowRating] = useState(false);
   
   // Calculate overall ranking score (weighted average)
   const overallScore = (attendancePercent * 0.3) + (scorePercent * 0.3) + (averageGrade * 20 * 0.4);
@@ -41,9 +44,6 @@ const StudentRankCard: React.FC<StudentRankProps> = ({
     if (rank === 3) return <Medal className="h-6 w-6 text-amber-700" />;
     return <span className="text-lg font-bold">{rank}</span>;
   };
-  
-  // Set animation delay based on rank for staggered entrance
-  const animationDelay = `${(rank - 1) * 100}ms`;
   
   // Get initials for avatar fallback
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
@@ -60,18 +60,24 @@ const StudentRankCard: React.FC<StudentRankProps> = ({
           {getBadgeForRank(rank)}
         </div>
         
-        <Avatar className="h-10 w-10 border-2 border-primary/20">
-          <AvatarImage src={avatarUrl} alt={`${firstName} ${lastName}`} />
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+          <Avatar className="h-10 w-10 border-2 border-primary/20 cursor-pointer"
+            onClick={() => setShowRating(!showRating)}>
+            <AvatarImage src={avatarUrl} alt={`${firstName} ${lastName}`} />
+            <AvatarFallback className="bg-primary/10 text-primary">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </motion.div>
         
         <div className="flex-1 min-w-0">
           <h3 className="font-medium truncate">
             {firstName} {lastName}
           </h3>
           <p className="text-sm text-muted-foreground truncate">ID: {studentId}</p>
+          {studyGroup && (
+            <p className="text-xs text-muted-foreground truncate">Группа: {studyGroup}</p>
+          )}
         </div>
         
         <div className="flex items-center gap-2">
@@ -84,6 +90,23 @@ const StudentRankCard: React.FC<StudentRankProps> = ({
           </Badge>
         </div>
       </div>
+      
+      {showRating && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mt-4 overflow-hidden"
+        >
+          <RatingStars 
+            rating={averageGrade} 
+            maxRating={5} 
+            size={isMobile ? "sm" : "md"}
+            colorScheme={rank <= 3 ? (rank === 1 ? "gold" : rank === 2 ? "blue" : "purple") : "gold"}
+          />
+        </motion.div>
+      )}
       
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-4">
         <div>
