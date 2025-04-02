@@ -8,14 +8,14 @@ import { useThreeAnimation, useFloatingAnimation } from "@/hooks/use-three-anima
 
 // 3D trophy placeholder during loading
 const TrophyModel: React.FC = () => {
-  const baseRef = useThreeAnimation({ 
+  const baseRef = useThreeAnimation<THREE.Group>({ 
     position: [0, -5, 0], 
     rotation: [0, -Math.PI / 4, 0],
     scale: [0, 0, 0]
   }, 1);
   
-  const cupRef = useFloatingAnimation(0.1, 0.8, 0);
-  const handleRef = useFloatingAnimation(0.05, 1, 2);
+  const cupRef = useFloatingAnimation<THREE.Group>(0.1, 0.8, 0);
+  const handleRef = useFloatingAnimation<THREE.Group>(0.05, 1, 2);
   
   // Trophy colors
   const goldMaterial = new THREE.MeshStandardMaterial({
@@ -73,12 +73,12 @@ const MedalModel: React.FC<{
   rank: number;
   delay: number;
 }> = ({ position, color, rank, delay }) => {
-  const medalRef = useThreeAnimation({ 
+  const medalRef = useThreeAnimation<THREE.Group>({ 
     position: [position[0], position[1] - 3, position[2]], 
     scale: [0, 0, 0] 
   }, 0.8 + delay * 0.5);
   
-  const floatingRef = useFloatingAnimation(0.1, 0.5, rank * 2, true);
+  const floatingRef = useFloatingAnimation<THREE.Group>(0.1, 0.5, rank * 2, true);
   
   const medalMaterial = new THREE.MeshStandardMaterial({
     color: new THREE.Color(color),
@@ -128,7 +128,7 @@ const MedalModel: React.FC<{
 
 // Loading text
 const LoadingText: React.FC = () => {
-  const textRef = useThreeAnimation({ 
+  const textRef = useThreeAnimation<THREE.Group>({ 
     position: [0, -3, 0],
     scale: [0.5, 0.5, 0.5]
   });

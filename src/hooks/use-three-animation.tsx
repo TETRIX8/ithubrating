@@ -5,7 +5,7 @@ import { gsap } from 'gsap';
 import * as THREE from 'three';
 
 // Hook for animating a Three.js object with GSAP
-export const useThreeAnimation = (
+export const useThreeAnimation = <T extends THREE.Object3D>(
   initialValues?: {
     position?: [number, number, number];
     rotation?: [number, number, number];
@@ -13,7 +13,7 @@ export const useThreeAnimation = (
   },
   animationDuration = 0.5
 ) => {
-  const ref = useRef<THREE.Object3D>(null);
+  const ref = useRef<T>(null);
   
   useEffect(() => {
     if (!ref.current || !initialValues) return;
@@ -63,13 +63,13 @@ export const useThreeAnimation = (
 };
 
 // Hook for applying floating animation to a Three.js object
-export const useFloatingAnimation = (
+export const useFloatingAnimation = <T extends THREE.Object3D>(
   amplitude = 0.1,
   frequency = 1,
   uniqueOffset = 0,
   enabled = true
 ) => {
-  const ref = useRef<THREE.Object3D>(null);
+  const ref = useRef<T>(null);
   const initialY = useRef<number>(0);
   
   useEffect(() => {
@@ -91,12 +91,12 @@ export const useFloatingAnimation = (
 };
 
 // Hook for applying hover effects
-export const useHoverEffect = (
+export const useHoverEffect = <T extends THREE.Mesh>(
   onHover?: () => void,
   onLeave?: () => void,
   hoverScale: [number, number, number] = [1.2, 1.2, 1.2]
 ) => {
-  const ref = useRef<THREE.Mesh>(null);
+  const ref = useRef<T>(null);
   
   const handlePointerOver = () => {
     if (!ref.current) return;
