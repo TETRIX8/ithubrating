@@ -1,10 +1,10 @@
 
-import React from "react";
-import { Canvas } from "@react-three/fiber";
+import React, { useRef, useMemo } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Text, Stars } from "@react-three/drei";
 import { motion } from "framer-motion";
 import * as THREE from "three";
-import { useThreeAnimation, useFloatingAnimation } from "@/hooks/use-three-animation";
+import { useThreeAnimation, useFloatingAnimation, useParticleAnimation } from "@/hooks/use-three-animation";
 
 // 3D trophy placeholder during loading
 const TrophyModel: React.FC = () => {
@@ -63,6 +63,63 @@ const TrophyModel: React.FC = () => {
         <boxGeometry args={[1.2, 0.2, 0.8]} />
       </mesh>
     </group>
+  );
+};
+
+// Chaotic particles that form into a leaderboard
+const ChaoticParticles: React.FC = () => {
+  // Generate positions for particles to form a leaderboard-like shape
+  const targetPositions = useMemo(() => {
+    const positions: THREE.Vector3[] = [];
+    const rows = 8;
+    const cols = 5;
+    const spacing = 0.6;
+    
+    // Header row (slightly larger)
+    for (let col = 0; col < cols; col++) {
+      positions.push(new THREE.Vector3(
+        (col - cols/2 + 0.5) * spacing * 1.2, 
+        2, 
+        0
+      ));
+    }
+    
+    // Data rows
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        positions.push(new THREE.Vector3(
+          (col - cols/2 + 0.5) * spacing,
+          1.5 - row * spacing * 0.8,
+          0
+        ));
+      }
+    }
+    
+    return positions;
+  }, []);
+  
+  // Custom materials for particles
+  const sphereMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+    color: new THREE.Color("#4F46E5"),
+    metalness: 0.3,
+    roughness: 0.4,
+    transparent: true,
+    opacity: 0.9,
+  }), []);
+  
+  // Use our custom hook for particle animation
+  const particlesRef = useParticleAnimation(targetPositions, 5, 8);
+  
+  return (
+    <>
+      <instancedMesh 
+        ref={particlesRef}
+        args={[undefined, undefined, targetPositions.length]}
+        material={sphereMaterial}
+      >
+        <sphereGeometry args={[0.15, 16, 16]} />
+      </instancedMesh>
+    </>
   );
 };
 
@@ -158,6 +215,9 @@ const LoadingScene: React.FC = () => {
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={1} />
       <spotLight position={[0, 10, 0]} angle={0.3} penumbra={1} intensity={1} castShadow />
+      
+      {/* New chaotic particles animation */}
+      <ChaoticParticles />
       
       <TrophyModel />
       <MedalModel position={[-2, 0, 0]} color="#C0C0C0" rank={2} delay={0.2} />
