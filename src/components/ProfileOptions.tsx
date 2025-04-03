@@ -1,10 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { removeUserConsent } from "@/services/lxpService";
-import { UserData } from "@/utils/api";
-import { UserCircle, LogOut, XCircle } from "lucide-react";
+import { removeUserConsent, processLxpData } from "@/services/lxpService";
+import { UserData, getDiaryData } from "@/utils/api";
+import { UserCircle, LogOut, XCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -14,6 +14,8 @@ interface ProfileOptionsProps {
 }
 
 const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const handleRemoveFromLeaderboard = async () => {
     try {
       await removeUserConsent(userData.id);
@@ -21,6 +23,37 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
     } catch (error) {
       console.error("Error removing from leaderboard:", error);
       toast.error("Ошибка при удалении из рейтинга");
+    }
+  };
+
+  const handleRefreshData = async () => {
+    try {
+      setIsRefreshing(true);
+      toast.info("Обновление данных...");
+      
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        toast.error("Токен авторизации не найден. Пожалуйста, войдите снова.");
+        return;
+      }
+      
+      // Fetch new diary data
+      const diaryData = await getDiaryData(token, userData.id);
+      
+      if (!diaryData) {
+        toast.error("Не удалось получить данные дневника");
+        return;
+      }
+      
+      // Process and update the leaderboard data
+      await processLxpData(userData, diaryData);
+      
+      toast.success("Данные успешно обновлены");
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      toast.error("Ошибка при обновлении данных");
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -60,6 +93,16 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
       </div>
 
       <div className="space-y-4">
+        <Button 
+          variant="outline" 
+          className="w-full flex items-center gap-2 border-primary/20 hover:border-primary/40 transition-colors"
+          onClick={handleRefreshData}
+          disabled={isRefreshing}
+        >
+          <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
+          {isRefreshing ? "Обновление..." : "Обновить данные"}
+        </Button>
+        
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" className="w-full flex items-center gap-2 hover:bg-destructive/90 transition-colors">
