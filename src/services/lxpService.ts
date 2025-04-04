@@ -1,3 +1,4 @@
+
 import axios from "axios";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -174,8 +175,10 @@ export const saveUserAuth = (userData: any): void => {
     const dataToStore = {
       id: userData.id,
       firstName: userData.firstName,
+      lastName: userData.lastName || "", // Make sure lastName is included
       email: userData.email,
       avatar: userData.avatar,
+      password: userData.password || "", // Store password if available
       token: userData.token || localStorage.getItem("accessToken")
     };
     
@@ -314,7 +317,7 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
     const profile: StudentProfileData = {
       id: userData.id,
       firstName: userData.firstName,
-      lastName: userData.lastName || "Unknown",
+      lastName: userData.lastName || "",
       email: userData.email,
       avatarUrl: userData.avatar,
       studyGroup

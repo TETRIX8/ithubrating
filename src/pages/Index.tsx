@@ -222,7 +222,7 @@ const Index = () => {
             {students.length === 0 && !isLoadingLeaderboard && (
               <div className="text-center mt-8">
                 <p className="text-muted-foreground mb-4">
-                  Пока нет данных в рейтинге. Войдите в систему, чтобы добавить себя!
+                  Пока нет данных в рейтинге. Войдите в систему, чтобы доба��ить себя!
                 </p>
                 <Button
                   onClick={switchToLogin}
@@ -265,7 +265,7 @@ const Index = () => {
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
                     <User size={20} />
-                    <span className="hidden sm:inline">{userData.firstName}</span>
+                    <span className="hidden sm:inline">{userData.firstName} {userData.lastName || ''}</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-60 p-0">
@@ -274,14 +274,14 @@ const Index = () => {
                       {userData.avatar ? (
                         <img 
                           src={userData.avatar} 
-                          alt={userData.firstName} 
+                          alt={`${userData.firstName} ${userData.lastName || ''}`} 
                           className="h-10 w-10 rounded-full"
                         />
                       ) : (
                         <User className="h-10 w-10 p-2 bg-gray-100 rounded-full" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{userData.firstName}</p>
+                        <p className="font-medium truncate">{userData.firstName} {userData.lastName || ''}</p>
                         <p className="text-xs text-gray-500 truncate">{userData.email}</p>
                       </div>
                     </div>

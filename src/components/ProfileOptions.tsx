@@ -71,7 +71,7 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2 }}
             src={userData.avatar} 
-            alt={`${userData.firstName}`} 
+            alt={`${userData.firstName} ${userData.lastName || ''}`} 
             className="h-20 w-20 rounded-full object-cover mx-auto sm:mx-0 ring-4 ring-primary/20"
           />
         ) : (
@@ -86,7 +86,7 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
         )}
         <div className="text-center sm:text-left">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent">
-            {userData.firstName}
+            {userData.firstName} {userData.lastName || ''}
           </h2>
           <p className="text-gray-600">{userData.email}</p>
         </div>

@@ -22,6 +22,7 @@ export interface UserData {
   createdAt: string;
   email: string;
   firstName: string;
+  lastName: string;
   id: string;
   isLead: boolean;
   roles: string[];
@@ -165,6 +166,7 @@ export const getUserData = async (token: string): Promise<UserData> => {
         createdAt
         email
         firstName
+        lastName
         id
         isLead
         roles

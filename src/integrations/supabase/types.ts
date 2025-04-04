@@ -374,6 +374,89 @@ export type Database = {
           },
         ]
       }
+      publication_authors: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          name: string
+          publication_id: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          publication_id?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          publication_id?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_authors_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publications: {
+        Row: {
+          abstract: string
+          author_id: string | null
+          category: string
+          comments_count: number | null
+          content: string
+          cover_image: string | null
+          created_at: string | null
+          date: string
+          id: string
+          saved: boolean | null
+          tags: string[] | null
+          title: string
+        }
+        Insert: {
+          abstract: string
+          author_id?: string | null
+          category: string
+          comments_count?: number | null
+          content: string
+          cover_image?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          saved?: boolean | null
+          tags?: string[] | null
+          title: string
+        }
+        Update: {
+          abstract?: string
+          author_id?: string | null
+          category?: string
+          comments_count?: number | null
+          content?: string
+          cover_image?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          saved?: boolean | null
+          tags?: string[] | null
+          title?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           created_at: string
