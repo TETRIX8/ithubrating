@@ -57,6 +57,7 @@ export interface UserData {
     __typename: string;
   };
   __typename: string;
+  password?: string;
 }
 
 export interface DiaryData {

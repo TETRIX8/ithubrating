@@ -109,7 +109,7 @@ const Index = () => {
       const data = await getUserData(token);
 
       // Store the credentials - include the token and any password if provided
-      const credentials = {
+      const credentials: UserData & { token: string } = {
         ...data,
         token: token
       };
