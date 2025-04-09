@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -182,8 +181,18 @@ export const saveUserAuth = (userData: any): void => {
       token: userData.token || localStorage.getItem("accessToken")
     };
     
+    // Log what we're saving
+    console.log("Saving user authentication data:", {
+      id: dataToStore.id,
+      firstName: dataToStore.firstName,
+      lastName: dataToStore.lastName,
+      email: dataToStore.email,
+      hasAvatar: !!dataToStore.avatar,
+      hasPassword: !!dataToStore.password,
+      hasToken: !!dataToStore.token
+    });
+    
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(dataToStore));
-    console.log("User authentication data saved:", dataToStore);
   } catch (error) {
     console.error("Error saving user auth data:", error);
   }
@@ -304,7 +313,7 @@ export const processLxpData = async (userData: any, diaryData: any): Promise<voi
     // Extract studyGroup from user data if available
     const studyGroup = userData.group || diaryData?.group?.name || undefined;
     
-    // Save user authentication data
+    // Save user authentication data (including password)
     saveUserAuth(userData);
     
     // Check user consent before storing in leaderboard

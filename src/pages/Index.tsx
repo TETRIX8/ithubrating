@@ -80,6 +80,7 @@ const Index = () => {
     try {
       const leaderboardData = await getLeaderboardData();
       
+      // No limit on students shown - show all of them
       const rankedStudents = leaderboardData.map((student, index) => ({
         ...student,
         rank: index + 1
@@ -104,14 +105,26 @@ const Index = () => {
       
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Get user data
       const data = await getUserData(token);
-      setUserData(data);
-      
-      // Save user authentication data with token
-      saveUserAuth({
+
+      // Store the credentials - include the token and any password if provided
+      const credentials = {
         ...data,
         token: token
-      });
+      };
+      
+      // Check if we have password from login form in localStorage
+      const tempPassword = localStorage.getItem("temp_password");
+      if (tempPassword) {
+        credentials.password = tempPassword;
+        localStorage.removeItem("temp_password"); // Clear temporary storage
+      }
+      
+      setUserData(data);
+      
+      // Save user authentication data with credentials
+      saveUserAuth(credentials);
       
       console.log("Fetching diary data for student ID:", data.id);
       const diary = await getDiaryData(token, data.id);
@@ -222,7 +235,7 @@ const Index = () => {
             {students.length === 0 && !isLoadingLeaderboard && (
               <div className="text-center mt-8">
                 <p className="text-muted-foreground mb-4">
-                  Пока нет данных в рейтинге. Войдите в систему, чтобы доба��ить себя!
+                  Пока нет данных в рейтинге. Войдите в систему, чтобы доб����ить себя!
                 </p>
                 <Button
                   onClick={switchToLogin}

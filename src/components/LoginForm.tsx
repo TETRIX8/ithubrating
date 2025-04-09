@@ -1,6 +1,8 @@
-
 import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { signIn } from "@/utils/api";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface LoginFormProps {
@@ -13,29 +15,26 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error("Пожалуйста, заполните все поля");
+      toast.error("Пожалуйста, введите email и пароль");
       return;
     }
     
     setIsLoading(true);
     
     try {
-      console.log("Attempting login with:", { email });
+      localStorage.setItem("temp_password", password);
+      
       const token = await signIn({ email, password });
-      
-      if (!token) {
-        throw new Error("Не удалось получить токен авторизации");
-      }
-      
-      console.log("Login successful, token received");
       onSuccess(token);
-    } catch (error) {
-      console.error("Login failed:", error);
-      onError(error as Error);
+    } catch (error: any) {
+      localStorage.removeItem("temp_password");
+      toast.error("Ошибка авторизации. Пожалуйста, проверьте email и пароль.");
+      console.error("Login error:", error);
+      onError(error);
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +50,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
             <label htmlFor="email" className="text-sm font-medium block text-gray-700">
               Электронная почта
             </label>
-            <input
+            <Input
               id="email"
               type="email"
               value={email}
@@ -69,7 +68,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
                 Пароль
               </label>
             </div>
-            <input
+            <Input
               id="password"
               type="password"
               value={password}

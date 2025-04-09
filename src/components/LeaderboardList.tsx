@@ -61,6 +61,7 @@ const LeaderboardList: React.FC<LeaderboardListProps> = ({ students, isLoading }
           transition={{ duration: 0.3 }}
           className="space-y-4"
         >
+          {/* Removed limitation - show all students */}
           {studentsList.map((student, index) => (
             <motion.div
               key={student.studentId}
@@ -68,7 +69,7 @@ const LeaderboardList: React.FC<LeaderboardListProps> = ({ students, isLoading }
               animate={{ opacity: 1, y: 0 }}
               transition={{ 
                 duration: 0.4, 
-                delay: index * 0.08,
+                delay: Math.min(index * 0.08, 1.5), // Cap the delay for better performance with large lists
                 type: "spring",
                 stiffness: 100 
               }}
