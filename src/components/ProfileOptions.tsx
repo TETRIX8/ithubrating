@@ -62,7 +62,7 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-white/90 backdrop-blur-md rounded-lg shadow-lg p-6 max-w-md mx-auto border border-white/50"
+      className="bg-white/90 backdrop-blur-md rounded-lg shadow-lg p-6 max-w-md mx-auto border border-purple-200/50"
     >
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
         {userData.avatar ? (
@@ -72,20 +72,20 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
             transition={{ delay: 0.2 }}
             src={userData.avatar} 
             alt={`${userData.firstName} ${userData.lastName || ''}`} 
-            className="h-20 w-20 rounded-full object-cover mx-auto sm:mx-0 ring-4 ring-primary/20"
+            className="h-20 w-20 rounded-full object-cover mx-auto sm:mx-0 ring-4 ring-purple-200/20"
           />
         ) : (
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="h-20 w-20 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full flex items-center justify-center mx-auto sm:mx-0 ring-4 ring-primary/10"
+            className="h-20 w-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mx-auto sm:mx-0 ring-4 ring-purple-100/10"
           >
-            <UserCircle className="h-14 w-14 text-primary/60" />
+            <UserCircle className="h-14 w-14 text-purple-500/60" />
           </motion.div>
         )}
         <div className="text-center sm:text-left">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-700 bg-clip-text text-transparent">
             {userData.firstName} {userData.lastName || ''}
           </h2>
           <p className="text-gray-600">{userData.email}</p>
@@ -95,7 +95,7 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
       <div className="space-y-4">
         <Button 
           variant="outline" 
-          className="w-full flex items-center gap-2 border-primary/20 hover:border-primary/40 transition-colors"
+          className="w-full flex items-center gap-2 border-purple-200/20 hover:border-purple-400/40 transition-colors"
           onClick={handleRefreshData}
           disabled={isRefreshing}
         >
@@ -128,7 +128,7 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
 
         <Button 
           variant="outline" 
-          className="w-full flex items-center gap-2 border-primary/20 hover:border-primary/40 transition-colors"
+          className="w-full flex items-center gap-2 border-purple-200/20 hover:border-purple-400/40 transition-colors"
           onClick={onLogout}
         >
           <LogOut size={18} />

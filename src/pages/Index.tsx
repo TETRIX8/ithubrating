@@ -348,11 +348,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-indigo-50/30">
-      <header className="py-4 px-8 backdrop-blur-md bg-white/80 sticky top-0 z-10 shadow-sm border-b border-indigo-100/50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-purple-50/30">
+      <header className="py-4 px-8 backdrop-blur-md bg-white/80 sticky top-0 z-10 shadow-sm border-b border-purple-100/50">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg shadow-md">
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-2 rounded-lg shadow-md">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6 text-white"
@@ -366,7 +366,7 @@ const Index = () => {
                 />
               </svg>
             </div>
-            <span className="text-lg font-semibold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent hidden md:block">
+            <span className="text-lg font-semibold bg-gradient-to-r from-purple-700 to-indigo-700 bg-clip-text text-transparent hidden md:block">
               Рейтинг студентов LXP
             </span>
           </div>
@@ -375,23 +375,23 @@ const Index = () => {
             {userData && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
+                  <Button variant="ghost" size="icon" className="flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors">
                     <div className="flex items-center gap-2">
                       {userData.avatar ? (
                         <img 
                           src={userData.avatar} 
                           alt={`${userData.firstName} ${userData.lastName || ''}`} 
-                          className="h-8 w-8 rounded-full ring-2 ring-primary/20"
+                          className="h-8 w-8 rounded-full ring-2 ring-purple-200"
                         />
                       ) : (
-                        <User size={20} className="text-primary" />
+                        <User size={20} className="text-purple-600" />
                       )}
                       <span className="hidden sm:inline font-medium">{userData.firstName} {userData.lastName || ''}</span>
                     </div>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-0 rounded-xl shadow-lg">
-                  <div className="p-4 bg-gradient-to-b from-indigo-50 to-white rounded-t-xl">
+                  <div className="p-4 bg-gradient-to-b from-purple-50 to-white rounded-t-xl">
                     <div className="flex items-center gap-3 mb-3">
                       {userData.avatar ? (
                         <img 
@@ -400,7 +400,7 @@ const Index = () => {
                           className="h-12 w-12 rounded-full ring-2 ring-white/80"
                         />
                       ) : (
-                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-lg ring-2 ring-white/80">
+                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center text-purple-600 font-semibold text-lg ring-2 ring-white/80">
                           {userData.firstName.charAt(0)}{userData.lastName?.charAt(0) || ''}
                         </div>
                       )}
@@ -410,8 +410,8 @@ const Index = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 mt-3">
-                      <Button variant="outline" size="sm" className="w-full justify-start bg-white hover:bg-indigo-50" onClick={() => navigate("/diary")}>
-                        <Book className="mr-2 h-4 w-4 text-indigo-600" />
+                      <Button variant="outline" size="sm" className="w-full justify-start bg-white hover:bg-purple-50" onClick={() => navigate("/diary")}>
+                        <Book className="mr-2 h-4 w-4 text-purple-600" />
                         <span>Дневник</span>
                       </Button>
                       <Button variant="outline" size="sm" className="w-full justify-start bg-white hover:bg-red-50 text-red-500 hover:text-red-600" onClick={resetToLogin}>
@@ -428,7 +428,7 @@ const Index = () => {
               href="https://github.com/TETRIX8/lxpapi" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors"
+              className="flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors"
             >
               <Github size={20} />
               <span className="hidden sm:inline">GitHub</span>
@@ -437,7 +437,7 @@ const Index = () => {
             {!isAuthenticated && step !== "login" && step !== "splash" && (
               <Button
                 onClick={switchToLogin}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md transition-all"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:shadow-md transition-all"
               >
                 Войти
               </Button>
@@ -452,7 +452,7 @@ const Index = () => {
         </div>
       </main>
 
-      <footer className="py-8 px-8 text-center bg-gradient-to-b from-transparent to-blue-50/80">
+      <footer className="py-8 px-8 text-center bg-gradient-to-b from-transparent to-purple-50/80">
         <div className="max-w-7xl mx-auto">
           <p className="text-gray-500 text-sm">
             Рейтинг успеваемости студентов LXP &copy; {new Date().getFullYear()}

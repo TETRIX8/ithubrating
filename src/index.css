@@ -5,33 +5,33 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 250 100% 99%;
+    --foreground: 250 10% 5%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 250 10% 5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 250 10% 5%;
 
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 256 83% 64%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 260 40% 96%;
+    --secondary-foreground: 250 10% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 260 40% 96%;
+    --muted-foreground: 250 10% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 250 40% 96%;
+    --accent-foreground: 250 10% 10%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --border: 250 30% 90%;
+    --input: 250 30% 90%;
+    --ring: 256 83% 64%;
 
     --radius: 1rem;
   }
@@ -43,18 +43,21 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background-image: url("https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=1920&auto=format&fit=crop"), linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%);
+    background-blend-mode: overlay;
+    background-size: cover;
     background-attachment: fixed;
+    background-position: center;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-lg border border-white/30 shadow-lg;
+    @apply bg-white/80 backdrop-blur-lg border border-purple-200/30 shadow-lg;
   }
   
   .neo-blur {
-    @apply backdrop-blur-xl bg-white/20 border border-white/20 shadow-xl;
+    @apply backdrop-blur-xl bg-white/20 border border-purple-200/20 shadow-xl;
   }
   
   .typing-demo {
@@ -75,7 +78,7 @@
   }
   
   .loader-dot {
-    @apply inline-block h-2 w-2 rounded-full bg-primary mx-1;
+    @apply inline-block h-2 w-2 rounded-full bg-purple-500 mx-1;
     animation: pulse-soft 1.4s ease-in-out infinite;
   }
   
@@ -88,7 +91,7 @@
   }
 
   .page-gradient {
-    @apply bg-gradient-to-b from-blue-50 via-white to-blue-50/50;
+    @apply bg-gradient-to-b from-purple-50 via-white to-purple-50/50;
   }
   
   .card-hover {
@@ -96,21 +99,21 @@
   }
 
   .text-gradient {
-    @apply bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-purple-700 to-indigo-500 bg-clip-text text-transparent;
   }
   
   .hero-gradient {
-    background: linear-gradient(90deg, rgba(72,118,248,1) 0%, rgba(118,75,243,1) 100%);
+    background: linear-gradient(90deg, rgba(139,92,246,1) 0%, rgba(124,58,237,1) 100%);
   }
   
   .premium-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
     @apply text-white;
   }
   
   .premium-badge {
-    background: linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 100%);
-    @apply text-indigo-900 font-semibold px-2 py-0.5 rounded-full text-xs;
+    background: linear-gradient(90deg, #ddd6fe 0%, #c4b5fd 100%);
+    @apply text-purple-900 font-semibold px-2 py-0.5 rounded-full text-xs;
   }
 }
 
