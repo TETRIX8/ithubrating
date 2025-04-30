@@ -136,13 +136,8 @@ const Index = () => {
     try {
       const leaderboardData = await getLeaderboardData();
       
-      // Show all students in the leaderboard, no limit
-      const rankedStudents = leaderboardData.map((student, index) => ({
-        ...student,
-        rank: index + 1
-      }));
-      
-      setStudents(rankedStudents);
+      // We're already getting properly formatted StudentRankProps objects from getLeaderboardData
+      setStudents(leaderboardData);
     } catch (error) {
       console.error("Error loading leaderboard data:", error);
       toast.error("Ошибка при загрузке данных рейтинга");

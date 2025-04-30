@@ -26,6 +26,38 @@ export interface UserData {
   studentId?: string;
   password?: string;
   description?: string;
+  // Additional properties needed by ApiResponse.tsx
+  roles: string[];
+  phoneNumber?: string;
+  createdAt: string;
+  assignedSuborganizations: Array<{
+    suborganization: {
+      name: string;
+      __typename: string;
+    };
+    __typename: string;
+  }>;
+  notificationsSettings: {
+    isPushDailyDigestOnEmail: boolean;
+    __typename: string;
+  };
+  teacher?: {
+    assignedDisciplines_V2: Array<{
+      discipline: {
+        name: string;
+        code: string;
+        studyPeriods: Array<{
+          name: string;
+          startDate: string;
+          endDate: string;
+          __typename: string;
+        }>;
+        __typename: string;
+      };
+      __typename: string;
+    }>;
+    __typename: string;
+  };
   __typename: string;
 }
 
@@ -93,6 +125,12 @@ export interface DiaryData {
     hasRetake: boolean;
     __typename: string;
   }>;
+  // Add these fields for lxpService.ts
+  total_lessons?: number;
+  attended_lessons?: number;
+  total_scores?: number;
+  average_grade?: number;
+  study_group?: string;
 }
 
 export const signIn = async (credentials: SignInInput): Promise<string> => {

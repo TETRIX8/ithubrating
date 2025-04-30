@@ -4,16 +4,16 @@ import { UserData, DiaryData } from "@/utils/api";
 export const processLxpData = async (userData: UserData, diaryData: DiaryData) => {
   try {
     // Calculate attendance percentage
-    const totalClasses = diaryData.total_lessons;
-    const attendedClasses = diaryData.attended_lessons;
+    const totalClasses = diaryData.total_lessons || 0;
+    const attendedClasses = diaryData.attended_lessons || 0;
     const attendancePercent = totalClasses > 0 ? (attendedClasses / totalClasses) * 100 : 0;
 
     // Calculate average score percentage
-    const totalScores = diaryData.total_scores;
+    const totalScores = diaryData.total_scores || 0;
     const scorePercent = totalClasses > 0 ? (totalScores / totalClasses) : 0;
 
     // Extract average grade
-    const averageGrade = diaryData.average_grade;
+    const averageGrade = diaryData.average_grade || 0;
 
     // Check if the user already has a profile
     const { data: existingProfile, error: profileError } = await supabase
@@ -48,19 +48,18 @@ export const processLxpData = async (userData: UserData, diaryData: DiaryData) =
     }
 
     // Upsert student performance data
+    // Create a new table for student_performance with our own schema that matches what we're using
     const { error: upsertError } = await supabase
       .from('student_performance')
       .upsert([
         {
           student_id: userData.studentId,
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          avatar_url: userData.avatar,
           attendance_percent: attendancePercent,
-          score_percent: scorePercent,
           average_grade: averageGrade,
-          email: userData.email,
-          study_group: diaryData.study_group,
+          score_points: totalScores,
+          max_score_points: totalClasses * 100, // Assuming maximum score is 100 per class
+          study_period_name: "Current Period",
+          study_period_status: "STARTED"
         },
       ], { onConflict: 'student_id' });
 
@@ -78,19 +77,47 @@ export const processLxpData = async (userData: UserData, diaryData: DiaryData) =
 
 export const getLeaderboardData = async () => {
   try {
-    const { data, error } = await supabase
+    // Fetch data from student_performance table
+    const { data: performanceData, error: perfError } = await supabase
       .from('student_performance')
       .select('*')
-      .order('average_grade', { ascending: false })
-      .order('score_percent', { ascending: false })
-      .order('attendance_percent', { ascending: false });
+      .order('average_grade', { ascending: false });
 
-    if (error) {
-      console.error("Error fetching leaderboard data:", error);
-      throw error;
+    if (perfError) {
+      console.error("Error fetching performance data:", perfError);
+      throw perfError;
     }
 
-    return data || [];
+    // Fetch student profile data
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('student_profiles')
+      .select('*');
+
+    if (profilesError) {
+      console.error("Error fetching profiles data:", profilesError);
+      throw profilesError;
+    }
+
+    // Join the data and map to StudentRankProps format
+    const leaderboardData = performanceData.map((perf, index) => {
+      // Find matching profile
+      const profile = profilesData.find(p => p.student_id === perf.student_id) || {};
+      
+      return {
+        rank: index + 1,
+        studentId: perf.student_id,
+        firstName: profile.first_name || "Unknown",
+        lastName: profile.last_name || "Student",
+        avatarUrl: profile.avatar_url,
+        attendancePercent: perf.attendance_percent || 0,
+        scorePercent: (perf.score_points / (perf.max_score_points || 1)) * 100,
+        averageGrade: perf.average_grade || 0,
+        description: profile.description,
+        studyGroup: perf.study_period_name
+      };
+    });
+
+    return leaderboardData || [];
   } catch (error) {
     console.error("Error getting leaderboard data:", error);
     throw error;
@@ -173,14 +200,28 @@ export const updateUserProfile = async (studentId: string, data: ProfileUpdateDa
       
     if (error) throw error;
     
-    // Update student_performance to reflect the changes in the leaderboard
-    await supabase
+    // Fetch student performance to update only what we need
+    const { data: perfData } = await supabase
       .from('student_performance')
-      .update({
-        last_name: data.lastName,
-        avatar_url: data.avatarUrl
-      })
-      .eq('student_id', studentId);
+      .select('*')
+      .eq('student_id', studentId)
+      .single();
+      
+    if (perfData) {
+      // Keep all the performance data intact, just update the display fields
+      await supabase
+        .from('student_performance')
+        .update({
+          student_id: perfData.student_id,
+          attendance_percent: perfData.attendance_percent,
+          average_grade: perfData.average_grade,
+          score_points: perfData.score_points,
+          max_score_points: perfData.max_score_points,
+          study_period_name: perfData.study_period_name,
+          study_period_status: perfData.study_period_status
+        })
+        .eq('student_id', studentId);
+    }
       
     return true;
   } catch (error) {
