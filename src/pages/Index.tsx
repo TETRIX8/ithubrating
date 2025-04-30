@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/LoginForm";
@@ -21,7 +20,8 @@ import {
   saveUserConsent,
   getUserAuth,
   saveUserAuth,
-  clearUserAuth
+  clearUserAuth,
+  clearLeaderboardData
 } from "@/services/lxpService";
 import { 
   Popover,
@@ -42,18 +42,37 @@ const Index = () => {
   const [students, setStudents] = useState<StudentRankProps[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
   const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Clear leaderboard data on initial load
+  useEffect(() => {
+    const clearData = async () => {
+      try {
+        // Clear the leaderboard data in Supabase
+        await clearLeaderboardData();
+        console.log("Leaderboard data cleared successfully");
+      } catch (error) {
+        console.error("Error clearing leaderboard data:", error);
+      }
+    };
+
+    clearData();
+  }, []);
 
   useEffect(() => {
     if (step === "splash") {
       const timer = setTimeout(() => {
-        setStep("leaderboard");
-        loadLeaderboardData();
-      }, 3000); // Reduced splash screen time to 3 seconds
-      
-      const storedUserData = getUserAuth();
-      if (storedUserData) {
-        restoreUserSession(storedUserData);
-      }
+        // Always go to login step after splash screen
+        const storedUserData = getUserAuth();
+        
+        if (storedUserData && storedUserData.token) {
+          // If credentials exist, try to restore session
+          restoreUserSession(storedUserData);
+        } else {
+          // Otherwise force login
+          setStep("login");
+        }
+      }, 3000); // Splash screen time: 3 seconds
       
       return () => clearTimeout(timer);
     }
@@ -61,18 +80,52 @@ const Index = () => {
 
   const restoreUserSession = async (storedUser: any) => {
     try {
-      console.log("Restoring user session:", storedUser);
-      setUserData(storedUser);
-      setAccessToken(storedUser.token);
+      console.log("Attempting to restore user session:", storedUser);
+      setIsLoading(true);
       
       // Save token to localStorage for API calls
       if (storedUser.token) {
         localStorage.setItem("accessToken", storedUser.token);
+        setAccessToken(storedUser.token);
+        
+        // Try to verify the token by fetching user data
+        try {
+          const freshUserData = await getUserData(storedUser.token);
+          setUserData(freshUserData);
+          setIsAuthenticated(true);
+          
+          // Fetch diary data as well
+          const diaryData = await getDiaryData(storedUser.token, freshUserData.id);
+          setDiaryData(diaryData);
+          
+          // Process user data into leaderboard
+          if (hasUserConsent(freshUserData.id)) {
+            await processLxpData(freshUserData, diaryData);
+          } else {
+            setShowConsentDialog(true);
+          }
+          
+          // Show leaderboard with fresh data
+          await loadLeaderboardData();
+          setStep("leaderboard");
+          toast.success("Сессия восстановлена успешно");
+        } catch (error) {
+          console.error("Failed to verify token:", error);
+          setStep("login");
+          clearUserAuth();
+          localStorage.removeItem("accessToken");
+          toast.error("Сессия истекла. Необходимо войти заново");
+        }
+      } else {
+        setStep("login");
       }
     } catch (error) {
       console.error("Failed to restore session:", error);
       clearUserAuth();
       localStorage.removeItem("accessToken");
+      setStep("login");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -123,6 +176,7 @@ const Index = () => {
       }
       
       setUserData(data);
+      setIsAuthenticated(true);
       
       // Save user authentication data with credentials
       saveUserAuth(credentials);
@@ -138,12 +192,13 @@ const Index = () => {
       } else {
         await processLxpData(data, diary);
         await loadLeaderboardData();
-        setStep("data");
+        setStep("leaderboard");
         toast.success("Авторизация успешна. Данные уже в рейтинге.");
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
-      setStep("leaderboard");
+      setIsAuthenticated(false);
+      setStep("login");
       toast.error("Ошибка при получении данных пользователя");
     } finally {
       setIsLoading(false);
@@ -155,6 +210,7 @@ const Index = () => {
       saveUserConsent(userData.id);
       await processLxpData(userData, diaryData);
       await loadLeaderboardData();
+      setStep("leaderboard");
       toast.success("Данные добавлены в рейтинг");
     }
     setShowConsentDialog(false);
@@ -162,12 +218,14 @@ const Index = () => {
 
   const handleConsentDecline = () => {
     setShowConsentDialog(false);
+    setStep("leaderboard");
     toast.info("Данные не будут добавлены в рейтинг");
   };
 
   const handleLoginError = (error: Error) => {
     console.error("Login error:", error);
     toast.error("Ошибка авторизации");
+    setIsAuthenticated(false);
   };
 
   const resetToLogin = () => {
@@ -176,12 +234,18 @@ const Index = () => {
     setAccessToken(null);
     setUserData(null);
     setDiaryData(null);
-    setStep("leaderboard");
+    setIsAuthenticated(false);
+    setStep("login");
     toast.success("Вы вышли из системы");
   };
 
   const switchToLeaderboard = () => {
-    setStep("leaderboard");
+    if (!isAuthenticated) {
+      setStep("login");
+      toast.error("Необходимо авторизоваться для просмотра рейтинга");
+    } else {
+      setStep("leaderboard");
+    }
   };
 
   const switchToLogin = () => {
@@ -200,7 +264,13 @@ const Index = () => {
   const renderContent = () => {
     switch (step) {
       case "splash":
-        return <SplashScreen onComplete={() => setStep("leaderboard")} />;
+        return <SplashScreen onComplete={() => {
+          if (isAuthenticated) {
+            setStep("leaderboard");
+          } else {
+            setStep("login");
+          }
+        }} />;
       case "login":
         return (
           <div className="text-center mb-10 animate-fade-in">
@@ -210,7 +280,7 @@ const Index = () => {
             <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-8">
               Войдите, чтобы просмотреть свои данные и добавить себя в рейтинг студентов
             </p>
-            <div className="glass-card p-8 rounded-2xl max-w-md mx-auto shadow-xl">
+            <div className="glass-card p-8 rounded-2xl max-w-md mx-auto shadow-xl bg-white/80 backdrop-blur-md border border-white/50">
               <LoginForm onSuccess={handleLoginSuccess} onError={handleLoginError} />
             </div>
           </div>
@@ -222,9 +292,31 @@ const Index = () => {
           <ProfileOptions userData={userData} onLogout={resetToLogin} />
         ) : null;
       case "leaderboard":
+        if (!isAuthenticated) {
+          // Redirect to login if not authenticated
+          setStep("login");
+          return (
+            <div className="text-center animate-fade-in">
+              <h1 className="text-3xl font-bold mb-4">Необходима авторизация</h1>
+              <p className="text-gray-600 mb-6">
+                Для доступа к рейтингу успеваемости необходимо войти в систему
+              </p>
+              <Button 
+                onClick={switchToLogin}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg px-6 py-3"
+              >
+                Авторизоваться
+              </Button>
+            </div>
+          );
+        }
+        
         return (
           <>
-            <LeaderboardHeader />
+            <LeaderboardHeader 
+              isAuthenticated={isAuthenticated} 
+              onLoginClick={switchToLogin}
+            />
             
             {students.length > 0 && (
               <TopStudentsSection students={students} />
@@ -236,7 +328,7 @@ const Index = () => {
             />
             
             {students.length === 0 && !isLoadingLeaderboard && (
-              <div className="glass-card text-center mt-8 p-8 rounded-2xl">
+              <div className="glass-card text-center mt-8 p-8 rounded-2xl bg-white/80 backdrop-blur-md border border-white/50">
                 <p className="text-muted-foreground mb-6">
                   Пока нет данных в рейтинге. Войдите в систему, чтобы добавить себя!
                 </p>
@@ -256,11 +348,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="py-6 px-8 backdrop-blur-md bg-white/60 sticky top-0 z-10 shadow-sm">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-indigo-50/30">
+      <header className="py-4 px-8 backdrop-blur-md bg-white/80 sticky top-0 z-10 shadow-sm border-b border-indigo-100/50">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg shadow-md">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6 text-white"
@@ -274,7 +366,7 @@ const Index = () => {
                 />
               </svg>
             </div>
-            <span className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hidden md:block">
+            <span className="text-lg font-semibold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent hidden md:block">
               Рейтинг студентов LXP
             </span>
           </div>
@@ -342,22 +434,12 @@ const Index = () => {
               <span className="hidden sm:inline">GitHub</span>
             </a>
             
-            {step === "leaderboard" && !userData && (
+            {!isAuthenticated && step !== "login" && step !== "splash" && (
               <Button
                 onClick={switchToLogin}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md transition-all"
               >
                 Войти
-              </Button>
-            )}
-            
-            {step !== "leaderboard" && step !== "splash" && (
-              <Button
-                onClick={switchToLeaderboard}
-                variant="ghost"
-                className="text-gray-600 hover:text-indigo-600 transition-colors"
-              >
-                Рейтинг
               </Button>
             )}
           </div>
@@ -370,7 +452,7 @@ const Index = () => {
         </div>
       </main>
 
-      <footer className="py-8 px-8 text-center bg-gradient-to-b from-transparent to-blue-50/50">
+      <footer className="py-8 px-8 text-center bg-gradient-to-b from-transparent to-blue-50/80">
         <div className="max-w-7xl mx-auto">
           <p className="text-gray-500 text-sm">
             Рейтинг успеваемости студентов LXP &copy; {new Date().getFullYear()}

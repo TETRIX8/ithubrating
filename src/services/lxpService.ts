@@ -413,6 +413,38 @@ export const getLeaderboardData = async (): Promise<StudentLeaderboardEntry[]> =
   }
 };
 
+// Clear all leaderboard data from Supabase
+export const clearLeaderboardData = async (): Promise<void> => {
+  try {
+    console.log("Clearing all leaderboard data from Supabase");
+    
+    // Remove all student profiles
+    const { error: profileError } = await supabase
+      .from('student_profiles')
+      .delete()
+      .neq('student_id', 'placeholder'); // Delete all records
+    
+    if (profileError) {
+      console.error("Error clearing student profiles:", profileError);
+    }
+    
+    // Remove all performance data
+    const { error: performanceError } = await supabase
+      .from('student_performance')
+      .delete()
+      .neq('student_id', 'placeholder'); // Delete all records
+    
+    if (performanceError) {
+      console.error("Error clearing student performance data:", performanceError);
+    }
+    
+    console.log("All leaderboard data has been cleared successfully");
+  } catch (error: any) {
+    console.error("Error clearing leaderboard data:", error);
+    throw new Error(`Failed to clear leaderboard data: ${error.message}`);
+  }
+};
+
 export default {
   processLxpData,
   getLeaderboardData,
@@ -424,5 +456,6 @@ export default {
   removeFromLeaderboard,
   saveUserAuth,
   getUserAuth,
-  clearUserAuth
+  clearUserAuth,
+  clearLeaderboardData
 };
