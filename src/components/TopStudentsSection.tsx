@@ -20,8 +20,8 @@ const TopStudentsSection: React.FC<TopStudentsSectionProps> = ({ students }) => 
   }
 
   return (
-    <div className="mb-12 relative">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-100/50 via-indigo-50/30 to-transparent rounded-3xl" />
+    <div className="mb-16 relative">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-indigo-100/50 via-blue-50/30 to-transparent rounded-3xl" />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 px-4 py-8">
         {/* Second place */}
@@ -35,8 +35,8 @@ const TopStudentsSection: React.FC<TopStudentsSectionProps> = ({ students }) => 
             bounce: 0.4
           }}
         >
-          <Card className="glass-card text-center py-6 relative overflow-hidden group hover:shadow-lg transition-shadow duration-300">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-300 to-gray-400"></div>
+          <Card className="glass-card text-center py-6 relative overflow-hidden group hover:shadow-lg transition-shadow duration-300 border-gray-200 rounded-xl">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-gray-300 to-gray-400"></div>
             <div 
               className="absolute inset-0 bg-gradient-to-b from-gray-100/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
             />
@@ -61,7 +61,7 @@ const TopStudentsSection: React.FC<TopStudentsSectionProps> = ({ students }) => 
               >
                 <Avatar className="h-20 w-20 mx-auto border-4 border-gray-200 group-hover:scale-110 transition-transform duration-300 shadow-md">
                   <AvatarImage src={topThree[1]?.avatarUrl} alt={`${topThree[1]?.firstName} ${topThree[1]?.lastName}`} />
-                  <AvatarFallback className="text-xl bg-gray-200">
+                  <AvatarFallback className="text-xl bg-gray-200 text-gray-600">
                     {topThree[1]?.firstName.charAt(0)}{topThree[1]?.lastName.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
@@ -95,8 +95,8 @@ const TopStudentsSection: React.FC<TopStudentsSectionProps> = ({ students }) => 
             bounce: 0.5
           }}
         >
-          <Card className="glass-card text-center py-8 relative overflow-hidden transform md:-translate-y-4 group hover:shadow-xl transition-all duration-300">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-yellow-500"></div>
+          <Card className="glass-card text-center py-8 relative overflow-hidden transform md:-translate-y-4 group hover:shadow-xl transition-all duration-300 border-yellow-200 rounded-xl">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-yellow-300 to-yellow-500"></div>
             <motion.div 
               className="absolute inset-0"
               initial={{ background: "radial-gradient(circle at center, rgba(255, 215, 0, 0.1) 0%, transparent 70%)" }}
@@ -136,7 +136,7 @@ const TopStudentsSection: React.FC<TopStudentsSectionProps> = ({ students }) => 
               >
                 <Avatar className="h-24 w-24 mx-auto border-4 border-yellow-200 shadow-lg ring-4 ring-yellow-100/50">
                   <AvatarImage src={topThree[0]?.avatarUrl} alt={`${topThree[0]?.firstName} ${topThree[0]?.lastName}`} />
-                  <AvatarFallback className="text-2xl bg-yellow-100">
+                  <AvatarFallback className="text-2xl bg-yellow-100 text-yellow-800">
                     {topThree[0]?.firstName.charAt(0)}{topThree[0]?.lastName.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
@@ -150,11 +150,7 @@ const TopStudentsSection: React.FC<TopStudentsSectionProps> = ({ students }) => 
               </motion.div>
             </div>
             <motion.h3 
-              className="mt-4 font-semibold text-xl"
-              animate={{ 
-                background: ["linear-gradient(to right, #f59f0b, #fbbf24)", "linear-gradient(to right, #f59f0b, #fbbf24)"]
-              }}
-              style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+              className="mt-4 font-bold text-xl bg-gradient-to-r from-amber-500 to-yellow-500 bg-clip-text text-transparent"
             >
               {topThree[0]?.firstName} {topThree[0]?.lastName}
             </motion.h3>
@@ -194,8 +190,8 @@ const TopStudentsSection: React.FC<TopStudentsSectionProps> = ({ students }) => 
             bounce: 0.4
           }}
         >
-          <Card className="glass-card text-center py-6 relative overflow-hidden group hover:shadow-lg transition-shadow duration-300">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-700 to-amber-600"></div>
+          <Card className="glass-card text-center py-6 relative overflow-hidden group hover:shadow-lg transition-shadow duration-300 border-amber-200 rounded-xl">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-700 to-amber-600"></div>
             <div 
               className="absolute inset-0 bg-gradient-to-b from-amber-100/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
             />
@@ -221,7 +217,7 @@ const TopStudentsSection: React.FC<TopStudentsSectionProps> = ({ students }) => 
               >
                 <Avatar className="h-20 w-20 mx-auto border-4 border-amber-200 group-hover:scale-110 transition-transform duration-300 shadow-md">
                   <AvatarImage src={topThree[2]?.avatarUrl} alt={`${topThree[2]?.firstName} ${topThree[2]?.lastName}`} />
-                  <AvatarFallback className="text-xl bg-amber-100">
+                  <AvatarFallback className="text-xl bg-amber-100 text-amber-800">
                     {topThree[2]?.firstName.charAt(0)}{topThree[2]?.lastName.charAt(0)}
                   </AvatarFallback>
                 </Avatar>

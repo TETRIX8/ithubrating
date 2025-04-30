@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/LoginForm";
@@ -47,7 +48,7 @@ const Index = () => {
       const timer = setTimeout(() => {
         setStep("leaderboard");
         loadLeaderboardData();
-      }, 5000);
+      }, 3000); // Reduced splash screen time to 3 seconds
       
       const storedUserData = getUserAuth();
       if (storedUserData) {
@@ -80,7 +81,7 @@ const Index = () => {
     try {
       const leaderboardData = await getLeaderboardData();
       
-      // No limit on students shown - show all of them
+      // Show all students in the leaderboard, no limit
       const rankedStudents = leaderboardData.map((student, index) => ({
         ...student,
         rank: index + 1
@@ -203,13 +204,15 @@ const Index = () => {
       case "login":
         return (
           <div className="text-center mb-10 animate-fade-in">
-            <h1 className="text-4xl font-bold mb-4 text-gray-900">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gradient">
               Авторизация в системе LXP
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-8">
               Войдите, чтобы просмотреть свои данные и добавить себя в рейтинг студентов
             </p>
-            <LoginForm onSuccess={handleLoginSuccess} onError={handleLoginError} />
+            <div className="glass-card p-8 rounded-2xl max-w-md mx-auto shadow-xl">
+              <LoginForm onSuccess={handleLoginSuccess} onError={handleLoginError} />
+            </div>
           </div>
         );
       case "loading":
@@ -233,13 +236,13 @@ const Index = () => {
             />
             
             {students.length === 0 && !isLoadingLeaderboard && (
-              <div className="text-center mt-8">
-                <p className="text-muted-foreground mb-4">
-                  Пока нет данных в рейтинге. Войдите в систему, чтобы доб����ить себя!
+              <div className="glass-card text-center mt-8 p-8 rounded-2xl">
+                <p className="text-muted-foreground mb-6">
+                  Пока нет данных в рейтинге. Войдите в систему, чтобы добавить себя!
                 </p>
                 <Button
                   onClick={switchToLogin}
-                  className="bg-primary text-white rounded-lg px-4 py-2.5 hover:bg-primary/90 transition-colors"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg px-6 py-3 hover:shadow-lg hover:translate-y-[-2px] transition-all"
                 >
                   Авторизоваться
                 </Button>
@@ -253,23 +256,27 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
-      <header className="py-6 px-8">
+    <div className="min-h-screen flex flex-col">
+      <header className="py-6 px-8 backdrop-blur-md bg-white/60 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-primary"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-lg font-medium">Рейтинг студентов LXP</span>
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-white"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <span className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hidden md:block">
+              Рейтинг студентов LXP
+            </span>
           </div>
           
           <div className="flex items-center gap-4">
@@ -277,35 +284,47 @@ const Index = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
-                    <User size={20} />
-                    <span className="hidden sm:inline">{userData.firstName} {userData.lastName || ''}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-60 p-0">
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2">
                       {userData.avatar ? (
                         <img 
                           src={userData.avatar} 
                           alt={`${userData.firstName} ${userData.lastName || ''}`} 
-                          className="h-10 w-10 rounded-full"
+                          className="h-8 w-8 rounded-full ring-2 ring-primary/20"
                         />
                       ) : (
-                        <User className="h-10 w-10 p-2 bg-gray-100 rounded-full" />
+                        <User size={20} className="text-primary" />
+                      )}
+                      <span className="hidden sm:inline font-medium">{userData.firstName} {userData.lastName || ''}</span>
+                    </div>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0 rounded-xl shadow-lg">
+                  <div className="p-4 bg-gradient-to-b from-indigo-50 to-white rounded-t-xl">
+                    <div className="flex items-center gap-3 mb-3">
+                      {userData.avatar ? (
+                        <img 
+                          src={userData.avatar} 
+                          alt={`${userData.firstName} ${userData.lastName || ''}`} 
+                          className="h-12 w-12 rounded-full ring-2 ring-white/80"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-lg ring-2 ring-white/80">
+                          {userData.firstName.charAt(0)}{userData.lastName?.charAt(0) || ''}
+                        </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{userData.firstName} {userData.lastName || ''}</p>
+                        <p className="font-semibold truncate">{userData.firstName} {userData.lastName || ''}</p>
                         <p className="text-xs text-gray-500 truncate">{userData.email}</p>
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 mt-3">
-                      <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => navigate("/diary")}>
-                        <Book className="mr-2 h-4 w-4" />
-                        Дневник
+                      <Button variant="outline" size="sm" className="w-full justify-start bg-white hover:bg-indigo-50" onClick={() => navigate("/diary")}>
+                        <Book className="mr-2 h-4 w-4 text-indigo-600" />
+                        <span>Дневник</span>
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full justify-start text-red-500 hover:text-red-600" onClick={resetToLogin}>
+                      <Button variant="outline" size="sm" className="w-full justify-start bg-white hover:bg-red-50 text-red-500 hover:text-red-600" onClick={resetToLogin}>
                         <LogOut className="mr-2 h-4 w-4" />
-                        Выйти
+                        <span>Выйти</span>
                       </Button>
                     </div>
                   </div>
@@ -317,7 +336,7 @@ const Index = () => {
               href="https://github.com/TETRIX8/lxpapi" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
+              className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors"
             >
               <Github size={20} />
               <span className="hidden sm:inline">GitHub</span>
@@ -326,8 +345,7 @@ const Index = () => {
             {step === "leaderboard" && !userData && (
               <Button
                 onClick={switchToLogin}
-                variant="ghost"
-                className="text-primary hover:text-primary/80 transition-colors"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md transition-all"
               >
                 Войти
               </Button>
@@ -337,7 +355,7 @@ const Index = () => {
               <Button
                 onClick={switchToLeaderboard}
                 variant="ghost"
-                className="text-gray-600 hover:text-primary transition-colors"
+                className="text-gray-600 hover:text-indigo-600 transition-colors"
               >
                 Рейтинг
               </Button>
@@ -346,15 +364,15 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="flex-1 flex items-start justify-center px-6 py-8">
+      <main className="flex-1 flex items-start justify-center px-6 py-10">
         <div className="w-full max-w-7xl mx-auto">
           {renderContent()}
         </div>
       </main>
 
-      <footer className="py-6 px-8 text-center text-gray-500 text-sm">
+      <footer className="py-8 px-8 text-center bg-gradient-to-b from-transparent to-blue-50/50">
         <div className="max-w-7xl mx-auto">
-          <p>
+          <p className="text-gray-500 text-sm">
             Рейтинг успеваемости студентов LXP &copy; {new Date().getFullYear()}
           </p>
         </div>
