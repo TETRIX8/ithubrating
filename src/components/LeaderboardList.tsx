@@ -1,6 +1,6 @@
-
 import React, { useState } from "react";
 import StudentRankCard, { StudentRankProps } from "./StudentRankCard";
+import StudentProfile from "./StudentProfile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,10 +11,18 @@ import LeaderboardLoading from "./LeaderboardLoading";
 interface LeaderboardListProps {
   students: StudentRankProps[];
   isLoading: boolean;
+  currentUserId?: string;
+  onEditProfile?: () => void;
 }
 
-const LeaderboardList: React.FC<LeaderboardListProps> = ({ students, isLoading }) => {
+const LeaderboardList: React.FC<LeaderboardListProps> = ({ 
+  students, 
+  isLoading,
+  currentUserId,
+  onEditProfile
+}) => {
   const [activeTab, setActiveTab] = useState<string>("overall");
+  const [selectedStudent, setSelectedStudent] = useState<StudentRankProps | null>(null);
   
   // Group students by their studyGroup (if present)
   const groupedStudents = students.reduce((acc, student) => {
@@ -61,7 +69,6 @@ const LeaderboardList: React.FC<LeaderboardListProps> = ({ students, isLoading }
           transition={{ duration: 0.3 }}
           className="space-y-4"
         >
-          {/* Removed limitation - show all students */}
           {studentsList.map((student, index) => (
             <motion.div
               key={student.studentId}
@@ -74,7 +81,10 @@ const LeaderboardList: React.FC<LeaderboardListProps> = ({ students, isLoading }
                 stiffness: 100 
               }}
             >
-              <StudentRankCard {...student} />
+              <StudentRankCard 
+                {...student} 
+                onClick={() => setSelectedStudent(student)}
+              />
             </motion.div>
           ))}
         </motion.div>
@@ -84,6 +94,18 @@ const LeaderboardList: React.FC<LeaderboardListProps> = ({ students, isLoading }
 
   if (isLoading) {
     return <LeaderboardLoading />;
+  }
+
+  // If a student is selected, show their profile
+  if (selectedStudent) {
+    return (
+      <StudentProfile 
+        student={selectedStudent} 
+        onClose={() => setSelectedStudent(null)} 
+        isCurrentUser={currentUserId === selectedStudent.studentId}
+        onEdit={currentUserId === selectedStudent.studentId ? onEditProfile : undefined}
+      />
+    );
   }
 
   const groupNames = Object.keys(groupedStudents).sort();

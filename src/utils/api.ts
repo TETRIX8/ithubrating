@@ -18,46 +18,15 @@ interface SignInResponse {
 }
 
 export interface UserData {
-  avatar: string;
-  createdAt: string;
-  email: string;
+  id: string;
   firstName: string;
   lastName: string;
-  id: string;
-  isLead: boolean;
-  roles: string[];
-  phoneNumber: string;
-  legalDocumentsApprovedAt: string;
-  notificationsSettings: {
-    isPushDailyDigestOnEmail: boolean;
-    __typename: string;
-  };
-  assignedSuborganizations: {
-    suborganization: {
-      name: string;
-      __typename: string;
-    };
-    __typename: string;
-  }[];
-  teacher: {
-    assignedDisciplines_V2: {
-      discipline: {
-        name: string;
-        code: string;
-        studyPeriods: {
-          name: string;
-          startDate: string;
-          endDate: string;
-          __typename: string;
-        }[];
-        __typename: string;
-      };
-      __typename: string;
-    }[];
-    __typename: string;
-  };
-  __typename: string;
+  email: string;
+  avatar?: string;
+  studentId?: string;
   password?: string;
+  description?: string;
+  __typename: string;
 }
 
 export interface DiaryData {

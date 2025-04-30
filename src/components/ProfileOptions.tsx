@@ -1,20 +1,22 @@
-
 import React, { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { removeUserConsent, processLxpData } from "@/services/lxpService";
 import { UserData, getDiaryData } from "@/utils/api";
-import { UserCircle, LogOut, XCircle, RefreshCw } from "lucide-react";
+import { UserCircle, LogOut, XCircle, RefreshCw, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import ProfileEditor from "./ProfileEditor";
 
 interface ProfileOptionsProps {
   userData: UserData;
   onLogout: () => void;
+  onUpdate?: (updatedData: Partial<UserData>) => void;
 }
 
-const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) => {
+const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout, onUpdate }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleRemoveFromLeaderboard = async () => {
     try {
@@ -57,6 +59,23 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
     }
   };
 
+  const handleProfileUpdate = (updatedData: Partial<UserData>) => {
+    setIsEditing(false);
+    if (onUpdate) {
+      onUpdate(updatedData);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <ProfileEditor 
+        userData={userData} 
+        onUpdate={handleProfileUpdate} 
+        onCancel={() => setIsEditing(false)}
+      />
+    );
+  }
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
@@ -93,6 +112,15 @@ const ProfileOptions: React.FC<ProfileOptionsProps> = ({ userData, onLogout }) =
       </div>
 
       <div className="space-y-4">
+        <Button 
+          variant="outline" 
+          className="w-full flex items-center gap-2 border-primary/20 hover:border-primary/40 transition-colors"
+          onClick={() => setIsEditing(true)}
+        >
+          <Edit size={18} />
+          Редактировать профиль
+        </Button>
+        
         <Button 
           variant="outline" 
           className="w-full flex items-center gap-2 border-primary/20 hover:border-primary/40 transition-colors"
