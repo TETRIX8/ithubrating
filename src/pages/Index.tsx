@@ -21,8 +21,7 @@ import {
   getUserAuth,
   saveUserAuth,
   clearUserAuth,
-  clearLeaderboardData,
-  updateUserProfile
+  clearLeaderboardData
 } from "@/services/lxpService";
 import { 
   Popover,
@@ -30,9 +29,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 
-type AppStep = "splash" | "login" | "loading" | "data" | "leaderboard" | "profileEdit";
+type AppStep = "splash" | "login" | "loading" | "data" | "leaderboard";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -136,8 +134,13 @@ const Index = () => {
     try {
       const leaderboardData = await getLeaderboardData();
       
-      // We're already getting properly formatted StudentRankProps objects from getLeaderboardData
-      setStudents(leaderboardData);
+      // Show all students in the leaderboard, no limit
+      const rankedStudents = leaderboardData.map((student, index) => ({
+        ...student,
+        rank: index + 1
+      }));
+      
+      setStudents(rankedStudents);
     } catch (error) {
       console.error("Error loading leaderboard data:", error);
       toast.error("Ошибка при загрузке данных рейтинга");
@@ -216,7 +219,7 @@ const Index = () => {
   const handleConsentDecline = () => {
     setShowConsentDialog(false);
     setStep("leaderboard");
-    toast.info("Данные не будут добавлены в р��йтинг");
+    toast.info("Данные не будут добавлены в рейтинг");
   };
 
   const handleLoginError = (error: Error) => {
@@ -258,51 +261,6 @@ const Index = () => {
     }
   };
 
-  const handleProfileUpdate = async (updatedData: Partial<UserData>) => {
-    if (!userData) return;
-    
-    try {
-      // Update the UI first for better UX
-      setUserData({
-        ...userData,
-        ...updatedData
-      });
-      
-      // Update student data in the leaderboard
-      const updatedStudents = students.map(student => {
-        if (student.studentId === userData.studentId) {
-          return {
-            ...student,
-            firstName: userData.firstName,
-            lastName: updatedData.lastName || student.lastName,
-            avatarUrl: updatedData.avatar || student.avatarUrl,
-            description: updatedData.description
-          };
-        }
-        return student;
-      });
-      
-      setStudents(updatedStudents);
-      
-      // Update in Supabase and process data for leaderboard
-      if (updatedData.lastName || updatedData.avatar) {
-        await updateUserProfile(userData.studentId!, {
-          lastName: updatedData.lastName,
-          avatarUrl: updatedData.avatar,
-          description: updatedData.description
-        });
-        
-        // Refresh leaderboard data after profile update
-        await loadLeaderboardData();
-      }
-      
-      setStep("leaderboard");
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Ошибка при обновлении профиля");
-    }
-  };
-
   const renderContent = () => {
     switch (step) {
       case "splash":
@@ -331,11 +289,7 @@ const Index = () => {
         return <Loading />;
       case "data":
         return userData ? (
-          <ProfileOptions 
-            userData={userData} 
-            onLogout={resetToLogin} 
-            onUpdate={handleProfileUpdate}
-          />
+          <ProfileOptions userData={userData} onLogout={resetToLogin} />
         ) : null;
       case "leaderboard":
         if (!isAuthenticated) {
@@ -371,8 +325,6 @@ const Index = () => {
             <LeaderboardList 
               students={students} 
               isLoading={isLoadingLeaderboard} 
-              currentUserId={userData?.studentId}
-              onEditProfile={() => setStep("data")}
             />
             
             {students.length === 0 && !isLoadingLeaderboard && (

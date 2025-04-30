@@ -18,47 +18,46 @@ interface SignInResponse {
 }
 
 export interface UserData {
-  id: string;
+  avatar: string;
+  createdAt: string;
+  email: string;
   firstName: string;
   lastName: string;
-  email: string;
-  avatar?: string;
-  studentId?: string;
-  password?: string;
-  description?: string;
-  // Additional properties needed by ApiResponse.tsx
+  id: string;
+  isLead: boolean;
   roles: string[];
-  phoneNumber?: string;
-  createdAt: string;
-  assignedSuborganizations: Array<{
+  phoneNumber: string;
+  legalDocumentsApprovedAt: string;
+  notificationsSettings: {
+    isPushDailyDigestOnEmail: boolean;
+    __typename: string;
+  };
+  assignedSuborganizations: {
     suborganization: {
       name: string;
       __typename: string;
     };
     __typename: string;
-  }>;
-  notificationsSettings: {
-    isPushDailyDigestOnEmail: boolean;
-    __typename: string;
-  };
-  teacher?: {
-    assignedDisciplines_V2: Array<{
+  }[];
+  teacher: {
+    assignedDisciplines_V2: {
       discipline: {
         name: string;
         code: string;
-        studyPeriods: Array<{
+        studyPeriods: {
           name: string;
           startDate: string;
           endDate: string;
           __typename: string;
-        }>;
+        }[];
         __typename: string;
       };
       __typename: string;
-    }>;
+    }[];
     __typename: string;
   };
   __typename: string;
+  password?: string;
 }
 
 export interface DiaryData {
@@ -125,12 +124,6 @@ export interface DiaryData {
     hasRetake: boolean;
     __typename: string;
   }>;
-  // Add these fields for lxpService.ts
-  total_lessons?: number;
-  attended_lessons?: number;
-  total_scores?: number;
-  average_grade?: number;
-  study_group?: string;
 }
 
 export const signIn = async (credentials: SignInInput): Promise<string> => {

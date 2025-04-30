@@ -17,15 +17,10 @@ export interface StudentRankProps {
   attendancePercent: number;
   scorePercent: number;
   averageGrade: number;
-  studyGroup?: string;
-  description?: string; // Add this field for storing profile description
+  studyGroup?: string; // Add study group property
 }
 
-interface StudentRankCardProps extends StudentRankProps {
-  onClick?: () => void; // Add click handler prop
-}
-
-const StudentRankCard: React.FC<StudentRankCardProps> = ({
+const StudentRankCard: React.FC<StudentRankProps> = ({
   rank,
   studentId,
   firstName,
@@ -34,8 +29,7 @@ const StudentRankCard: React.FC<StudentRankCardProps> = ({
   attendancePercent,
   scorePercent,
   averageGrade,
-  studyGroup,
-  onClick // Add this prop
+  studyGroup
 }) => {
   const { isMobile } = useBreakpoint();
   const [showRating, setShowRating] = useState(false);
@@ -76,12 +70,7 @@ const StudentRankCard: React.FC<StudentRankCardProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rank * 0.05, duration: 0.3 }}
-      className="glass-card rounded-lg p-4 mb-4 transition-all hover:translate-y-[-2px] hover:shadow-lg cursor-pointer"
-      onClick={onClick} // Add onClick handler
-      whileHover={{ 
-        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-        scale: 1.01
-      }}
+      className="glass-card rounded-lg p-4 mb-4 transition-all hover:translate-y-[-2px] hover:shadow-lg"
     >
       <div className="flex items-center gap-3 sm:gap-4">
         <div className="flex items-center justify-center w-8 h-8">
