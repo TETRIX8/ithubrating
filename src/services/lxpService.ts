@@ -1,5 +1,16 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UserData, DiaryData } from "@/utils/api";
+
+// Define a type for student profiles from database
+interface StudentProfile {
+  student_id: string;
+  first_name: string;
+  last_name: string;
+  avatar_url: string | null;
+  email: string;
+  description?: string;
+}
 
 export const processLxpData = async (userData: UserData, diaryData: DiaryData) => {
   try {
@@ -48,7 +59,6 @@ export const processLxpData = async (userData: UserData, diaryData: DiaryData) =
     }
 
     // Upsert student performance data
-    // Create a new table for student_performance with our own schema that matches what we're using
     const { error: upsertError } = await supabase
       .from('student_performance')
       .upsert([
@@ -58,7 +68,7 @@ export const processLxpData = async (userData: UserData, diaryData: DiaryData) =
           average_grade: averageGrade,
           score_points: totalScores,
           max_score_points: totalClasses * 100, // Assuming maximum score is 100 per class
-          study_period_name: "Current Period",
+          study_period_name: diaryData.study_group || "Current Period",
           study_period_status: "STARTED"
         },
       ], { onConflict: 'student_id' });
@@ -100,14 +110,21 @@ export const getLeaderboardData = async () => {
 
     // Join the data and map to StudentRankProps format
     const leaderboardData = performanceData.map((perf, index) => {
-      // Find matching profile
-      const profile = profilesData.find(p => p.student_id === perf.student_id) || {};
+      // Find matching profile - use type assertion to handle potentially undefined profile
+      const profile = profilesData.find(p => p.student_id === perf.student_id) as StudentProfile || {
+        first_name: "Unknown",
+        last_name: "Student",
+        avatar_url: null,
+        email: "",
+        student_id: perf.student_id,
+        description: ""
+      };
       
       return {
         rank: index + 1,
         studentId: perf.student_id,
-        firstName: profile.first_name || "Unknown",
-        lastName: profile.last_name || "Student",
+        firstName: profile.first_name,
+        lastName: profile.last_name || "Unknown",
         avatarUrl: profile.avatar_url,
         attendancePercent: perf.attendance_percent || 0,
         scorePercent: (perf.score_points / (perf.max_score_points || 1)) * 100,
